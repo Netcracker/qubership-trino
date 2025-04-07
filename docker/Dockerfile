@@ -4,7 +4,7 @@ USER root
 
 ENV TRUST_CERTS_DIR=/home/trino/trustcerts
 
-COPY entrypoint.sh /opt/entrypoint.sh
+COPY docker/entrypoint.sh /opt/entrypoint.sh
 
 RUN mkdir ${TRUST_CERTS_DIR} && \
     chmod 777 ${JAVA_HOME}/lib/security/cacerts && \
