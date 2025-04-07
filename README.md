@@ -132,6 +132,35 @@ tls:
 {{- end }}
 #--Qubership custom change---
 
+{{/*
+MinIO S3 Endpoint
+*/}}
+{{- define "s3.endpoint" -}}
+{{- .Values.s3.endpoint -}}
+{{- end -}}
+
+{{/*
+MinIO S3 secretkey
+*/}}
+{{- define "s3.secretkey" -}}
+{{- .Values.s3.secretKey -}}
+{{- end -}}
+
+{{/*
+MinIO S3 accesskey
+*/}}
+{{- define "s3.accesskey" -}}
+{{- .Values.s3.accessKey -}}
+{{- end -}}
+
+
+{{/*
+Hive Metastore URI
+*/}}
+{{- define "hive.metastore.uri" -}}
+{{ printf "thrift://%s:%v" (.Values.hive.host) (.Values.hive.port) }} 
+{{- end -}}
+
 
 {{/*
 Common labels
