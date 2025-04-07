@@ -130,10 +130,6 @@ tls:
 {{ define "trino_image" -}}
 {{ printf "%s:%v" (.Values.image.repository) (.Values.image.tag) }}
 {{- end }}
-
-{{ define "jmx_exporter_image" -}}
-{{ printf "%s:%v" (.Values.jmx.exporter.image.repository) (.Values.jmx.exporter.image.tag) }}
-{{- end }}
 #--Qubership custom change---
 
 
