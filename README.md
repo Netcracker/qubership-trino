@@ -22,7 +22,7 @@ Trino's official documentation - https://trino.io/docs/current/overview.html.
 
 ## Helm Chart Customizations
 
-This section documents the custom modifications made to the Trino Helm chart used in this deployment.
+This section documents the custom modifications made to the Trino Helm chart in this deployment, compared to the official [Trino charts](https://github.com/trinodb/charts)
 
 ### `values.yaml`
 
