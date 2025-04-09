@@ -24,6 +24,16 @@ See [installation.md](/docs/public/installation.md)
 
 Trino authentication is different from most other services, so it's best to be familiar with https://trino.io/docs/current/security/authentication-types.html . In platform, [Password file authentication](https://trino.io/docs/current/security/password-file.html) is used. Note, that for trino password file authentication, enabling TLS on trino itsellf is not necessarily strictly speaking, it is possible to enable TLS on [ load balancer proxy](https://trino.io/docs/current/security/tls.html#approaches), or ingress in our case.
 
+## Trino Version Upgrade Process
+
+1) Update community docker image in [Dockerfile](/docker/Dockerfile)
+2) Update helm charts based on https://github.com/trinodb/charts while keeping platform changes
+3) Verify that Trino can be deployed successfully and integrates with all dependent services
+4) Check the JDK version used by Trino after upgrade, and ensure the correct truststore path is configured
+   (e.g., /usr/lib/jvm/ temurin/jdk-24+36/lib/security/cacerts) if needed for secure connections.
+5) If there are some problems with connections, trino connector documentation https://trino.io/docs/current/connector.html .
+6) Update documentation if needed.
+
 ## Useful links:
 
 * https://github.com/trinodb/trino - trino github page
