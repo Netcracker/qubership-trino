@@ -31,7 +31,7 @@ spec:
         checksum/access-control-config: {{ include (print $.Template.BasePath "/configmap-access-control-coordinator.yaml") . | sha256sum }}
         {{- end }}
         {{- if or .Values.catalogs .Values.additionalCatalogs }}
-        checksum/catalog-config: {{ include (print $.Template.BasePath "/configmap-catalog.yaml") . | sha256sum }}
+        checksum/catalog-config: {{ include (print $.Template.BasePath "/secret-catalog.yaml") . | sha256sum }}
         {{- end }}
         checksum/coordinator-config: {{ include (print $.Template.BasePath "/configmap-coordinator.yaml") . | sha256sum }}
       {{- if .Values.coordinator.annotations }}
@@ -65,8 +65,8 @@ spec:
             name: {{ template "trino.coordinator" . }}
         {{- if or .Values.catalogs .Values.additionalCatalogs }}
         - name: catalog-volume
-          configMap:
-            name: {{ template "trino.catalog" . }}
+          secret:
+            secretName: trino-catalog-secret
         {{- end }}
         - name: schemas-volume
           configMap:

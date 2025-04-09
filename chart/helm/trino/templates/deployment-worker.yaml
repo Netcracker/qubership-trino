@@ -32,7 +32,7 @@ spec:
     metadata:
       annotations:
         {{- if or .Values.catalogs .Values.additionalCatalogs }}
-        checksum/catalog-config: {{ include (print $.Template.BasePath "/configmap-catalog.yaml") . | sha256sum }}
+        checksum/catalog-config: {{ include (print $.Template.BasePath "/secret-catalog.yaml") . | sha256sum }}
         {{- end }}
         checksum/worker-config: {{ include (print $.Template.BasePath "/configmap-worker.yaml") . | sha256sum }}
       {{- if .Values.worker.gracefulShutdown.enabled }}
@@ -68,8 +68,8 @@ spec:
             name: {{ template "trino.worker" . }}
         {{- if or .Values.catalogs .Values.additionalCatalogs }}
         - name: catalog-volume
-          configMap:
-            name: {{ template "trino.catalog" . }}
+          secret:
+            secretName: trino-catalog-secret
         {{- end }}
         - name: schemas-volume
           configMap:
