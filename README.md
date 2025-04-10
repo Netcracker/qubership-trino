@@ -181,21 +181,21 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 
 # Qubership custom change: Qubership release support
 {{/*
-To add to service labels for cloud release
+To add to service labels for Qubership release
 */}}
 {{- define "to_add_to_service_labels" -}}
 name: {{ include "trino.name" . }}
 {{- end }}
 
 {{/*
-To add to deployment label for cloud release
+To add to deployment label for Qubership release
 */}}
 {{- define "to_add_to_deployment_labels" -}}
 name: {{ include "trino.name" . }}
 {{- end }}
 
 {{/*
-Processed by cert-manager label for cloud release
+Processed by cert-manager label for Qubership release
 */}}
 {{- define "cert_manager_label" -}}
 app.kubernetes.io/processed-by-operator: cert-manager
@@ -393,5 +393,6 @@ extrasecrets.yaml, secret-tls.yaml, tls-certificate.yaml, tls-issuer.yaml these 
 
 secret-catalog.yaml: 
 Used to securely store Trino catalog configurations (like DB connection properties) using Kubernetes Secrets instead of ConfigMaps.
+It has replaced the community `configmap-catalog.yaml`.
 
 ---

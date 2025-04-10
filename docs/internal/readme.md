@@ -9,8 +9,7 @@
 
 ## How to start
 
-Trino uses community helm charts from https://github.com/trinodb/charts with some minor changes(images are taken from manifest or labels are adjusted to cloud-release requirements).
-
+Trino uses community helm charts from https://github.com/trinodb/charts with some minor changes.
 Trino platform image is based on community image https://hub.docker.com/r/trinodb/trino. The changes in platform image compared to community image are:
 
 * Custom entrypoint that add logic for importing certificates to java truststore

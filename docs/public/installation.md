@@ -147,7 +147,7 @@ The profile resources are specified below:
 <!-- #GFCFilterMarkerEnd# -->
 # Parameters
 
-This chart is based on community chart: https://github.com/trinodb/charts with a few minor changes, like the image is being taken from manifest and additional `priorityClassName` parameter.
+This chart is based on community chart: https://github.com/trinodb/charts with a few minor changes.
 The following table lists the configurable parameters of the Trino chart and their default values.
 
 | Parameter                                           | Description                                                                                                                                                                                                                                                                                                                                                                                                      | Default                                              |
@@ -658,7 +658,7 @@ Installation [prerequisites](#prerequisites) should be fulfilled to prepare for 
 
 ### Manual Deployment
 
-The open source Helm chart is used to deploy Trino. Refer to the releases page to find the manifest.
+The open source Helm chart is used to deploy Trino.
 
 1. Navigate to the desired release tag and download the `<repo_root>/chart/helm/trino` directory.
    

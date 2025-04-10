@@ -95,21 +95,21 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 
 # Qubership custom change: Qubership release support
 {{/*
-To add to service labels for cloud release
+To add to service labels for Qubership release
 */}}
 {{- define "to_add_to_service_labels" -}}
 name: {{ include "trino.name" . }}
 {{- end }}
 
 {{/*
-To add to deployment label for cloud release
+To add to deployment label for Qubership release
 */}}
 {{- define "to_add_to_deployment_labels" -}}
 name: {{ include "trino.name" . }}
 {{- end }}
 
 {{/*
-Processed by cert-manager label for cloud release
+Processed by cert-manager label for Qubership release
 */}}
 {{- define "cert_manager_label" -}}
 app.kubernetes.io/processed-by-operator: cert-manager
