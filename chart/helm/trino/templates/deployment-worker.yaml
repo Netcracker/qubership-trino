@@ -69,7 +69,7 @@ spec:
         {{- if or .Values.catalogs .Values.additionalCatalogs }}
         - name: catalog-volume
           secret:
-            secretName: trino-catalog-secret
+            secretName: {{ template "trino.catalog" . }}
         {{- end }}
         - name: schemas-volume
           configMap:
