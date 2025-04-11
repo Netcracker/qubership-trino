@@ -58,10 +58,6 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 
-{{- define "trino.catalog" -}}
-{{ template "trino.fullname" . }}-catalog
-{{- end -}}
-
 #--Qubership custom change---
 {{ define "trino_image" -}}
 {{ printf "%s:%v" (.Values.image.repository) (.Values.image.tag) }}
