@@ -1,4 +1,4 @@
-This document describes the architectural features of Trino. 
+This section describes the architectural features of Trino. 
 
 ## Table of Contents
 
@@ -14,16 +14,16 @@ Trino is a distributed SQL query engine. Rather than relying on vertical scaling
 
 Following are the Trino use cases:
 
-* Centralized data access and analytics with query federation.
-* High performance analytics of object storage with SQL.
+* Centralized data access and analytics with query federation
+* High performance analytics of object storage with SQL
 
 ## Trino Components
 
 Trino installation includes one coordinator and any number of Trino workers.  
 
-![alt text](/docs/public/images/trino_architecture.png "Trino Architecture")
+![Trino Architecture](/docs/public/images/trino_architecture.png)
 
-The **Coordinator** is responsible for parsing, planning, and scheduling query execution across Trino workers.  
+The **Coordinator** node is responsible for parsing, planning, and scheduling query execution across Trino workers.  
 The coordinator node performs the following functions for each query:
 
 * Handles communications with clients
@@ -33,12 +33,12 @@ The coordinator node performs the following functions for each query:
 * Schedules query execution
 * Tracks worker activity
 
-**Worker** nodes are responsible for executing tasks assigned to them by the coordinator’s scheduler, including retrieving and processing data from data sources. 
+**Worker** nodes are responsible for executing the tasks assigned to them by the coordinator’s scheduler, including retrieving and processing data from data sources. 
 They communicate not only with the coordinator and data sources, but also with each other directly.
 Adding more Trino workers allows for more parallelism and faster query processing.
 
 The configuration necessary to access a data source is called a Catalog. Each catalog is configured with the connector 
-for a particular data source. A connector is called when a catalog that is configured to use the connector is used in a query. 
+for a particular data source. A connector is called, when a catalog that is configured to use the connector is used in a query. 
 Data source connections are established based on the catalog configuration.
 
 ```yaml
@@ -54,11 +54,15 @@ catalogs:
 
 # Supported Deployment Scheme
 
+This seb-section describes the supported deployment scheme for Trino.
+
 ## On-Prem
+
+The following deployment scheme is supported for on-premises.
 
 ### Non-HA Deployment Scheme
 
 Currently, Trino supports only the non-HA deployment scheme. A Trino cluster consists of a coordinator and many workers. 
 By default, there is one worker.
 
-![alt text](/docs/public/images/trino_non_ha.png "Trino Non-HA Deployment")
+![Trino Non-HA Deployment](/docs/public/images/trino_non_ha.png)
