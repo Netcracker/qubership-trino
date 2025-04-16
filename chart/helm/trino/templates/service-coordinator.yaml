@@ -26,6 +26,7 @@ spec:
       {{- end }}
       {{- end }}
       {{- end }}
+  # Qubership custom change: support secure connection    
   {{- if .Values.server.config.https.enabled }}
       - port: { { .Values.server.config.https.port } }
         targetPort: https

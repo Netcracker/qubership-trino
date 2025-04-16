@@ -32,6 +32,7 @@ spec:
               service:
                 name: {{ include "trino.fullname" $ }}
                 port:
+                # Qubership custom change: support secure connections
                 {{- if gt (len $.Values.ingress.tls) 0}}
                   number: {{ $.Values.server.config.https.port }}
                 {{- else }}

@@ -26,6 +26,7 @@ This section documents the custom modifications made to the Trino Helm chart in 
 
 ### `values.yaml`
 
+CUSTOM CHANGES: The following parameters have been added or modified to support our specific configuration requirements
 ```yaml
 image:
     repository: ghcr.io/netcracker/qubership-trino
@@ -132,6 +133,7 @@ tls:
 {{- end }}
 #--Qubership custom change---
 
+# Qubership custom change: custom values for MinIO S3
 {{/*
 MinIO S3 Endpoint
 */}}
@@ -153,7 +155,7 @@ MinIO S3 accesskey
 {{- .Values.s3.accessKey -}}
 {{- end -}}
 
-
+# Qubership custom change: custom values for Hive Metastore
 {{/*
 Hive Metastore URI
 */}}
@@ -344,6 +346,7 @@ spec:
               service:
                 name: {{ include "trino.fullname" $ }}
                 port:
+                # Qubership custom change: support secure connections
                 {{- if gt (len $.Values.ingress.tls) 0}}
                   number: {{ $.Values.server.config.https.port }}
                 {{- else }}
@@ -379,6 +382,7 @@ spec:
       {{- end }}
       {{- end }}
       {{- end }}
+  # Qubership custom change: support secure connection      
   {{- if .Values.server.config.https.enabled }}
       - port: { { .Values.server.config.https.port } }
         targetPort: https

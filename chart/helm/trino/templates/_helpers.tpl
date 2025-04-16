@@ -159,6 +159,7 @@ Create the secret name for the group-provider file
 {{- end }}
 {{- end }}
 
+# Qubership custom change: custom values for MinIO S3
 {{/*
 MinIO S3 Endpoint
 */}}
@@ -180,6 +181,8 @@ MinIO S3 accesskey
 {{- .Values.s3.accessKey -}}
 {{- end -}}
 
+
+# Qubership custom change: custom values for Hive Metastore
 
 {{/*
 Hive Metastore URI
