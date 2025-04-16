@@ -118,18 +118,18 @@ trino --server <your.ingress.address> --insecure --user <username> --password
 
 To use DBeaver as a Trino client, the following configuration should be done:
 
-* Download and install DBeaver.
-* Open DBeaver. 
-* Navigate to File -> New.
-* Select DBeaver as a wizard -> Database Connection.
-* Select Trino in the list of possible DB.
-* Enter the Trino connection parameters.  
-  ![alt text](/docs/public/images/DBeaver-Trino-Connection.png "DBeaver Trino Connection")
-  * JDBC URL: <your.ingress.address>
-  * Port: Navigate to K8s and open the Trino service. The port is specified at `spec.ports.nodePort`.
-  * Username and password are specified during the deployment. By default, `admin` is the username and the password is blank.
+1. Download and install DBeaver.
+2. Open DBeaver. 
+3. Navigate to **File** > **New**.
+4. Select **DBeaver** as a wizard > **Database Connection**.
+5. Select **Trino** in the list of possible databases.
+6. Enter the Trino connection parameters.
+    * JDBC URL: <your.ingress.address>
+    * Port: Navigate to K8s and open the Trino service. The port is specified at `spec.ports.nodePort`.
+    * Username and password are specified during the deployment. By default, `admin` is the username and the password is blank.
+      
+![DBeaver Trino Connection](/docs/public/images/DBeaver-Trino-Connection.png)
 
 ### DBeaver passwordauth
 
-To use the password authentication in Dbeaver, refer to [https://techjogging.com/connect-dbeaver-presto-https-protocol.html](https://techjogging.com/connect-dbeaver-presto-https-protocol.html).
-
+To use the password authentication in Dbeaver, refer to the _Official Documentation_ at [https://techjogging.com/connect-dbeaver-presto-https-protocol.html](https://techjogging.com/connect-dbeaver-presto-https-protocol.html).
