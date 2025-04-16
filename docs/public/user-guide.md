@@ -16,7 +16,7 @@ The following sections are described in this chapter:
 Trino can execute SQL queries against several data storages. Trino connectors should be configured for each of them.  
 The full list of possible connectors can be found at [https://trino.io/docs/current/connector.html](https://trino.io/docs/current/connector.html).
 
-Example connectors in CMBD config:
+The example connectors in CMBD config are specified in the below sub-sections.
 
 ### PostgresSQL
 
@@ -33,7 +33,7 @@ catalogs:
 
 ### Hive
 
-Following is an example of Hive that uses S3 storage, connector configuration that should be added to Trino's deployment parameters:
+The following is an example of Hive that uses S3 storage, connector configuration that should be added to Trino's deployment parameters:
 
 ```yaml
 catalogs:
