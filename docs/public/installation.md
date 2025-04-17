@@ -1,8 +1,10 @@
-This document describes the installation procedures for the Trino service. The following topics are covered in this chapter:
+This guide describes the installation procedures for the Trino service. 
+
+The following topics are covered in this chapter:
 
 * [Prerequisites](#prerequisites)
   * [Common](#common) 
-  * [Openshift](#openshift)
+  * [OpenShift](#openshift)
 * [Best Practices and Recommendations](#best-practices-and-recommendations)
     * [Hardware Requirements](#hardware-requirements)
         * [Small](#small)
@@ -27,7 +29,7 @@ This document describes the installation procedures for the Trino service. The f
 
 # Prerequisites
 
-The prerequisites are described in the following sections:
+The prerequisites are described in the following sub-sections:
 
 ## Common
 
@@ -35,9 +37,9 @@ The common prerequisites are specified below.
 
 * A namespace should be created.  
 
-## Openshift
+## OpenShift
 
-* If you are using the OpenShift cloud with restricted SCC, the Trino namespace must have specific annotations:
+If you are using the OpenShift cloud with restricted SCC, the Trino namespace must have specific annotations:
 
 ```bash
 oc annotate --overwrite namespace trino openshift.io/sa.scc.uid-range="1000/1000"
@@ -199,7 +201,7 @@ The following table lists the configurable parameters of the Trino chart and the
 | `secretMounts`                                      | An array of Kubernetes secrets to mount into coordinator and worker pods. Each element should have the name, secretName, and path (where to mount) properties.                                                                                                                                                                                                                                                   | `[]`                                                 |
 | `coordinator.deployment.progressDeadlineSeconds`                       |   The maximum time in seconds for a deployment to make progress before it is considered failed. The deployment controller continues to process failed deployments and a condition with a ProgressDeadlineExceeded reason is surfaced in the deployment status.                                                                                                          | `600`                                            |
 | `coordinator.deployment.revisionHistoryLimit`                       |     The number of old ReplicaSets to retain to allow rollback.                                                                                                         | `10`                                            |
-| `coordinator.deployment.strategy`                       |     The deployment strategy to use to replace existing pods with new ones.                                                                                                         | `{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"}`                                            |
+| `coordinator.deployment.strategy`                       |     The deployment strategy to use to replace the existing pods with new ones.                                                                                                         | `{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"}`                                            |
 | `coordinator.jvm.maxHeapSize`                       | The coordinator's JVM maximum heap size. Typically, the value representing 70 to 85 percent of the total available memory is recommended.                                                                                                                                                                                                                                                                        | `"1638M"`                                            |
 | `coordinator.jvm.gcMethod.type`                     | The JVM GC type for the coordinator. It should be set as a JVM command line option.                                                                                                                                                                                                                                                                                                                              | `"UseG1GC"`                                          |
 | `coordinator.jvm.gcMethod.g1.heapRegionSize`        | It sets the JVM GC1 heap region size for the coordinator.                                                                                                                                                                                                                                                                                                                                                        | `"32M"`                                              |
@@ -306,9 +308,9 @@ ingress:
 
 ## Enabling Password Authentication
 
-**Note**: In previous releases, configuring trino authentication was done using nodeport service. Now nodeport service is deprecated and not recommended, please use ingress instead.
+**Note**: In previous releases, configuring trino authentication was done using nodeport service. Now the nodeport service is deprecated and not recommended, please use ingress instead.
 
-**Note**: In supported configurations, password authentication only works for ingresses/routes with enabled TLS. It does not matter if TLS for ingress/route is enabled globally by the cloud or locally by ingress configuration - Trino checks that ingress/route terminates TLS traffic.
+**Note**: In the supported configurations, password authentication only works for ingresses/routes with enabled TLS. It does not matter if TLS for ingress/route is enabled globally by the cloud or locally by ingress configuration - Trino checks that ingress/route terminates TLS traffic.
 
 1. Enable password authentication.
 
@@ -361,9 +363,9 @@ auth:
 
 **Setting Trino Client to use `passwordAuth`**:
 
-For more information, refer to the [Trino Client](../../docs/public/user-guide.md#trino-client) section in the User Guide.
+For more information, refer to the [Trino Client](../../docs/public/user-guide.md#trino-client) section in the Trino Service User's Guide.
 
-For more information, refer to the [DBeaver passwordauth](../../docs/public/user-guide.md#dbeaver-passwordauth) section in the User Guide.
+For more information, refer to the [DBeaver passwordauth](../../docs/public/user-guide.md#dbeaver-passwordauth) section in the Trino Service User's Guide.
 
 ## HTTPS/TLS for Trino
 
@@ -427,7 +429,7 @@ tls:
 
 ### Enable HTTPS/TLS for Trino Server
 
-It is possible to enable TLS on trino web UI directly inside kubernetes. For this, trino server needs TLS key and certificate. TLS key and certificate can be requested from cert-manager using `certManagerInegration.enabled` parameter. By default, it will create secret `trino-cm-tls-cert` with TLS certificate, TLS key and CA certificate. It is necessary to specify HTTPS scheme for webserver liveness, readiness and startup probes. If using kubernetes with NGINX ingress controller, it is possible to pass annotations for ingress controller to work with TLS backend, for example:
+It is possible to enable TLS on trino web UI directly inside kubernetes. For this, trino server needs TLS key and certificate. TLS key and certificate can be requested from cert-manager using `certManagerInegration.enabled` parameter. By default, it will create secret `trino-cm-tls-cert` with TLS certificate, TLS key and CA certificate. It is necessary to specify HTTPS scheme for webserver liveness, readiness and startup probes. If you are using kubernetes with NGINX ingress controller, it is possible to pass annotations for ingress controller to work with TLS backend, for example:
 ```yaml
 ingress:
   enabled: true
@@ -448,7 +450,7 @@ ingress:
         - path: /
           pathType: ImplementationSpecific
 ```
-### Re-encrypt Route In Openshift Without NGINX Ingress Controller
+### Re-encrypt Route in Openshift Without NGINX Ingress Controller
 
 Automatic re-encrypt Route creation is not supported out of box, need to perform the following steps:
 
@@ -481,7 +483,7 @@ Automatic re-encrypt Route creation is not supported out of box, need to perform
    ```
 
 **Note**: If you can't access the webserver host after Route creation because of "too many redirects" error, then one of the possible root
-causes is there is HTTP traffic between balancers and the cluster. To resolve that issue it's necessary to add the Route name to
+causes is there is HTTP traffic between balancers and the cluster. To resolve that issue it is necessary to add the Route name to
 the exception list at the balancers.
 
 **Note** It might be possible to create the route in openshift automatically using annotations like `route.openshift.io/destination-ca-certificate-secret` and `route.openshift.io/termination: "reencrypt"` but this approach was not tested.
@@ -656,6 +658,8 @@ Installation [prerequisites](#prerequisites) should be fulfilled to prepare for 
 
 ## On-Prem
 
+The deployment for on-premises is described below.
+
 ### Manual Deployment
 
 The open source Helm chart is used to deploy Trino.
@@ -686,7 +690,7 @@ The process of the Trino service upgrade is usual and does not contain any speci
 
 # Rollback
 
-Trino service does not support rollback. In order to install an older version, the following steps should be performed:
+Trino service does not support rollback. In order to install an older version, perform the following steps:
 
 1. Clear the Trino service's namespace by recreating it.
 
