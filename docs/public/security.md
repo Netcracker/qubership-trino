@@ -1,4 +1,4 @@
-This guide provides information about the main security parameters and its configuration in the Trino service.
+This section provides information about the main security parameters and its configuration in the Trino service.
 
 ## Exposed Ports
 
