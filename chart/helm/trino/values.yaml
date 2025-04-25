@@ -37,8 +37,6 @@ image:
 # ```
 imagePullSecrets: []
 
-cloudIntegrationEnabled: false
-
 server:
   workers: 2
   node:
