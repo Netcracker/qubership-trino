@@ -31,7 +31,6 @@ CUSTOM CHANGES: The following parameters have been added or modified to support 
 image:
     repository: ghcr.io/netcracker/qubership-trino
     tag: main
-cloudIntegrationEnabled: false
 server:
   node:
   config:
