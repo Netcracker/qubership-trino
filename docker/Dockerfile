@@ -11,7 +11,8 @@ RUN mkdir ${TRUST_CERTS_DIR} && \
     chmod -R 777 /home/trino/trustcerts && \
     chmod 755 /opt/entrypoint.sh && \
     rm -rf /usr/lib/trino/plugin/pinot && \
-    rm -rf /usr/lib/trino/plugin/ranger
+    rm -rf /usr/lib/trino/plugin/ranger && \
+    rm -rf /usr/lib/trino/plugin/iceberg
     
 
 USER trino:trino
