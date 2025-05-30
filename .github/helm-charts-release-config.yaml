@@ -1,0 +1,9 @@
+---
+
+charts:
+  - name: trino
+    chart_file: charts/helm/trino/Chart.yaml
+    values_file: charts/helm/trino/new-values.yaml
+    image:
+      - ghcr.io/netcracker/qubership-trino:${release}
+      - ghcr.io/netcracker/qubership-trino-transfer:${release}
