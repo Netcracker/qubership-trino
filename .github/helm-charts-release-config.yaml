@@ -1,0 +1,9 @@
+---
+
+charts:
+  - name: qubership-opensearch
+    chart_file: charts/helm/opensearch-service/Chart.yaml
+    values_file: .github/release-images.yaml
+    image:
+      - ghcr.io/netcracker/qubership-trino:${release}
+      - ghcr.io/netcracker/qubership-trino-transfer:${release}
