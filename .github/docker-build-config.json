@@ -4,13 +4,13 @@
     {
       "name": "qubership-trino-transfer",
       "file": "docker-transfer/Dockerfile",
-      "context": "."
+      "context": ""
     },
     
     {
       "name": "qubership-trino",
       "file": "docker/Dockerfile",
-      "context": "."
+      "context": ""
     }
   ],
   "platforms": "linux/amd64,linux/arm64"
