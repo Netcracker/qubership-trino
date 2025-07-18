@@ -39,6 +39,13 @@ def update_values_yaml(values_path, image_versions):
     repo = image_block.get("repository")
     if repo in image_versions:
         print(f"Updating tag for {repo} → {image_versions[repo]}")
+        old_tag = image_block.get("tag", "<missing>")
+        new_tag = image_versions[repo]
+        if old_tag != new_tag:
+            print(f"Updating {repo} tag: {old_tag} → {new_tag}")
+        else:
+            print(f"No change needed for {repo}: already {new_tag}")
+
         image_block["tag"] = image_versions[repo]
     else:
         print(f"No matching tag found in releases.yaml for {repo}")
