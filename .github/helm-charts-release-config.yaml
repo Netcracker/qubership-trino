@@ -5,5 +5,5 @@ charts:
     chart_file: chart/helm/trino/Chart.yaml
     values_file: chart/helm/trino/release-images.yaml
     image:
-      - ghcr.io/netcracker/qubership-trino:${release}
-      - ghcr.io/netcracker/qubership-trino-transfer:${release}
+      - ghcr.io/axcelblaze003/qubership-trino:${release}
+      - ghcr.io/axcelblaze003/qubership-trino-transfer:${release}
