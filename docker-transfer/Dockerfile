@@ -1,9 +1,15 @@
-FROM python:3.12-slim
+FROM python:3.12-slim AS builder
 
-COPY docker-transfer/sync.py /sync.py
+WORKDIR /app
 
-# Transfer
-COPY chart /chart
-COPY docs /docs
+COPY docker-transfer/sync.py /app/sync.py
+COPY chart /app/chart
+COPY docs /app/docs
 
-RUN pip install ruamel.yaml && python sync.py chart/helm/trino/release-images.yaml chart/helm/trino/values.yaml
+RUN pip install --no-cache-dir ruamel.yaml && \
+    python sync.py chart/helm/trino/release-images.yaml chart/helm/trino/values.yaml
+
+FROM scratch
+
+COPY --from=builder /app/chart /chart
+COPY --from=builder /app/docs /docs
