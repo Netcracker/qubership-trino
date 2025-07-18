@@ -63,8 +63,31 @@ jobs:
           echo "components=${components}" >> $GITHUB_OUTPUT
           echo "platforms=${platforms}" >> $GITHUB_OUTPUT
 
+  docker-check-build:
+    needs: [load-docker-build-components, check-tag]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        component: ${{ fromJson(needs.load-docker-build-components.outputs.component) }}
+    steps:
+      - name: Get version for current component
+        id: get-version
+        run: |
+          echo "IMAGE=${{ matrix.component.name }}" >> $GITHUB_ENV
+      - name: Docker build
+        uses: netcracker/qubership-workflow-hub/actions/docker-action@main
+        with:
+          ref: ${{ github.ref }}
+          download-artifact: false
+          dry-run: true
+          component: ${{ toJson(matrix.component) }}
+          platforms: ${{ needs.load-docker-build-components.outputs.platforms }}
+          tags: "${{ env.IMAGE_VERSION }}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
   chart-release-prepare:
-    needs: [check-tag, load-docker-build-components]
+    needs: [check-tag, load-docker-build-components, docker-check-build]
     runs-on: ubuntu-latest
     outputs:
       images-versions: ${{ steps.update-versions.outputs.images-versions }}
@@ -85,13 +108,48 @@ jobs:
         run: |
           echo "Images versions: ${{ steps.update-versions.outputs.images-versions }}"
 
+  load-docker-build-components-after-chart-relase:
+    runs-on: ubuntu-latest
+    outputs:
+      component: ${{ steps.load_component.outputs.components }}
+      platforms: ${{ steps.load_component.outputs.platforms }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Load Docker Configuration
+        id: load_component
+        run:  |
+          verify=$(cat "$GITHUB_WORKSPACE/.github/docker-build-config.json" | jq '
+          def verify_structure:
+          .components as $components
+          | .platforms as $platforms
+          | ($components | type == "array")
+          and (all($components[]; has("name") and has("file") and has("context")))
+          and ($platforms | type == "string");
+          verify_structure
+          | if . then true else false end
+          ')
+          if [ ${verify} == 'true' ]; then
+            echo "✅ $GITHUB_WORKSPACE/.github/docker-build-config.json file is valid"
+            components=$(jq -c ".components" "$GITHUB_WORKSPACE/.github/docker-build-config.json")
+            platforms=$(jq -c ".platforms" "$GITHUB_WORKSPACE/.github/docker-build-config.json")
+          else
+            echo "❗ $GITHUB_WORKSPACE/.github/docker-build-config.json file is invalid"
+            echo "❗ $GITHUB_WORKSPACE/.github/docker-build-config.json file is invalid" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "components=${components}" >> $GITHUB_OUTPUT
+          echo "platforms=${platforms}" >> $GITHUB_OUTPUT
+        
+
   docker-build:
-    needs: [chart-release-prepare, load-docker-build-components]
+    needs: [chart-release-prepare, load-docker-build-components-after-chart-relase]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
       matrix:
-        component: ${{ fromJson(needs.load-docker-build-components.outputs.component) }}
+        component: ${{ fromJson(needs.load-docker-build-components-after-chart-relase.outputs.component) }}
     steps:
       - name: Get version for current component
         id: get-version
@@ -105,7 +163,7 @@ jobs:
           download-artifact: false
           dry-run: false
           component: ${{ toJson(matrix.component) }}
-          platforms: ${{ needs.load-docker-build-components.outputs.platforms }}
+          platforms: ${{ needs.load-docker-build-components-after-chart-relase.outputs.platforms }}
           tags: "${{ env.IMAGE_VERSION }},latest"
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -144,12 +202,5 @@ jobs:
           name: ${{ inputs.release }}
           tag: ${{ inputs.release }}
           version: ${{ inputs.release }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload Assets
-        uses: netcracker/qubership-workflow-hub/actions/assets-action@main
-        with:
-          tag: ${{ inputs.release }}
-          item-path: .cr-release-packages/*.tgz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
