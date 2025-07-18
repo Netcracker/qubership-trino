@@ -109,6 +109,7 @@ jobs:
           echo "Images versions: ${{ steps.update-versions.outputs.images-versions }}"
 
   load-docker-build-components-after-chart-relase:
+    needs: [check-tag, load-docker-build-components, docker-check-build, chart-release-prepare]
     runs-on: ubuntu-latest
     outputs:
       component: ${{ steps.load_component.outputs.components }}
