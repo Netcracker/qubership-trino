@@ -106,52 +106,19 @@ jobs:
           ${{ insert }}: ${{ vars }}
       - name: "Debug"
         run: |
-          echo "Images versions: ${{ steps.update-versions.outputs.images-versions }}"
-
-  load-docker-build-components-after-chart-relase:
-    needs: [check-tag, load-docker-build-components, docker-check-build, chart-release-prepare]
-    runs-on: ubuntu-latest
-    outputs:
-      component: ${{ steps.load_component.outputs.components }}
-      platforms: ${{ steps.load_component.outputs.platforms }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Load Docker Configuration
-        id: load_component
-        run:  |
-          verify=$(cat "$GITHUB_WORKSPACE/.github/docker-build-config.json" | jq '
-          def verify_structure:
-          .components as $components
-          | .platforms as $platforms
-          | ($components | type == "array")
-          and (all($components[]; has("name") and has("file") and has("context")))
-          and ($platforms | type == "string");
-          verify_structure
-          | if . then true else false end
-          ')
-          if [ ${verify} == 'true' ]; then
-            echo "✅ $GITHUB_WORKSPACE/.github/docker-build-config.json file is valid"
-            components=$(jq -c ".components" "$GITHUB_WORKSPACE/.github/docker-build-config.json")
-            platforms=$(jq -c ".platforms" "$GITHUB_WORKSPACE/.github/docker-build-config.json")
-          else
-            echo "❗ $GITHUB_WORKSPACE/.github/docker-build-config.json file is invalid"
-            echo "❗ $GITHUB_WORKSPACE/.github/docker-build-config.json file is invalid" >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
-          echo "components=${components}" >> $GITHUB_OUTPUT
-          echo "platforms=${platforms}" >> $GITHUB_OUTPUT
-        
+          echo "Images versions: ${{ steps.update-versions.outputs.images-versions }}"        
 
   docker-build:
-    needs: [chart-release-prepare, load-docker-build-components-after-chart-relase]
+    needs: [chart-release-prepare, load-docker-build-components]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
       matrix:
-        component: ${{ fromJson(needs.load-docker-build-components-after-chart-relase.outputs.component) }}
+        component: ${{ fromJson(needs.load-docker-build-components.outputs.component) }}
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
       - name: Get version for current component
         id: get-version
         run: |
@@ -164,7 +131,7 @@ jobs:
           download-artifact: false
           dry-run: false
           component: ${{ toJson(matrix.component) }}
-          platforms: ${{ needs.load-docker-build-components-after-chart-relase.outputs.platforms }}
+          platforms: ${{ needs.load-docker-build-components.outputs.platforms }}
           tags: "${{ env.IMAGE_VERSION }},latest"
         env:
           GITHUB_TOKEN: ${{ github.token }}
