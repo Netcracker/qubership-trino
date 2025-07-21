@@ -1,0 +1,15 @@
+{
+  "components": [
+    {
+      "name": "qubership-trino",
+      "file": "docker/Dockerfile",
+      "context": ""
+    },
+    {
+      "name": "qubership-trino-transfer",
+      "file": "docker-transfer/Dockerfile",
+      "context": ""
+    }
+  ],
+  "platforms": "linux/amd64,linux/arm64"
+}
