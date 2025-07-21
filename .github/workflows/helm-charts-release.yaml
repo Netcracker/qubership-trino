@@ -106,7 +106,7 @@ jobs:
           ${{ insert }}: ${{ vars }}
       - name: "Debug"
         run: |
-          echo "Images versions: ${{ steps.update-versions.outputs.images-versions }}"        
+          echo "Images versions: ${{ steps.update-versions.outputs.images-versions }}"
 
   docker-build:
     needs: [chart-release-prepare, load-docker-build-components]
@@ -116,9 +116,6 @@ jobs:
       matrix:
         component: ${{ fromJson(needs.load-docker-build-components.outputs.component) }}
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        
       - name: Get version for current component
         id: get-version
         run: |
@@ -170,5 +167,12 @@ jobs:
           name: ${{ inputs.release }}
           tag: ${{ inputs.release }}
           version: ${{ inputs.release }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Assets
+        uses: netcracker/qubership-workflow-hub/actions/assets-action@main
+        with:
+          tag: ${{ inputs.release }}
+          item-path: .cr-release-packages/*.tgz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
