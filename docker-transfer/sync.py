@@ -48,14 +48,14 @@ def update_values_yaml(values_path, image_versions):
 
         image_block["tag"] = image_versions[repo]
     else:
-        print(f"No matching tag found in releases.yaml for {repo}")
+        print(f"No matching tag found in release_images.yaml for {repo}")
 
     with open(values_path, "w") as f:
         yaml.dump(values, f)
 
 if __name__ == "__main__":
-    releases_file = sys.argv[1] if len(sys.argv) > 1 else "releases.yaml"
-    values_file = sys.argv[2] if len(sys.argv) > 2 else "values.yaml"
+    releases_file = sys.argv[1]
+    values_file = sys.argv[2]
 
     image_versions = parse_release_images_yaml(releases_file)
     update_values_yaml(values_file, image_versions)
