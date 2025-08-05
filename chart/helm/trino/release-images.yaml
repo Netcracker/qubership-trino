@@ -1,2 +1,2 @@
-qubershipTrinoImage: ghcr.io/netcracker/qubership-trino:main
-qubershipTrinoTransferImage: ghcr.io/netcracker/qubership-trino-transfer:main
+qubershipTrinoImage: ghcr.io/netcracker/qubership-trino:trino-475.0.3-1
+qubershipTrinoTransferImage: ghcr.io/netcracker/qubership-trino-transfer:trino-475.0.3-1
