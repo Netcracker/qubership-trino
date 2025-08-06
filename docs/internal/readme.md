@@ -27,11 +27,12 @@ Trino authentication is different from most other services, so it's best to be f
 
 1) Update community docker image in [Dockerfile](/docker/Dockerfile)
 2) Update helm charts based on https://github.com/trinodb/charts while keeping platform changes
-3) Verify that Trino can be deployed successfully and integrates with all dependent services
-4) Check the JDK version used by Trino after upgrade, and ensure the correct truststore path is configured
+3) Update the chart-version in the pipeline .github/workflows/helm-charts-release.yaml when the chart is upgraded.
+4) Verify that Trino can be deployed successfully and integrates with all dependent services
+5) Check the JDK version used by Trino after upgrade, and ensure the correct truststore path is configured
    (e.g., /usr/lib/jvm/ temurin/jdk-24+36/lib/security/cacerts) if needed for secure connections.
-5) If there are some problems with connections, trino connector documentation https://trino.io/docs/current/connector.html .
-6) Update documentation if needed.
+6) If there are some problems with connections, trino connector documentation https://trino.io/docs/current/connector.html .
+7) Update documentation if needed.
 
 ## Useful links:
 
