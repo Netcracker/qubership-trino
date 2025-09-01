@@ -1,4 +1,4 @@
-FROM trinodb/trino:475
+FROM trinodb/trino:476
 
 USER root
 
@@ -12,7 +12,6 @@ RUN mkdir ${TRUST_CERTS_DIR} && \
     chmod 755 /opt/entrypoint.sh && \
     rm -rf /usr/lib/trino/plugin/pinot && \
     rm -rf /usr/lib/trino/plugin/ranger && \
-    rm -rf /usr/lib/trino/plugin/iceberg && \
     rm -rf /usr/lib/trino/plugin/clickhouse
     
 
