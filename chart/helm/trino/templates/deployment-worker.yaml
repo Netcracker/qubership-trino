@@ -215,16 +215,16 @@ spec:
               containerPort: {{ $workerJmx.serverPort }}
               protocol: TCP
             {{- end }}
-          {{- if .Values.server.config.https.enabled }}
-          - name: https
-            containerPort: {{ .Values.server.config.https.port }}
-            protocol: TCP
-          {{- end }}
-          {{- range $key, $value := .Values.worker.additionalExposedPorts }}
+            {{- if .Values.server.config.https.enabled }}
+            - name: https
+              containerPort: {{ .Values.server.config.https.port }}
+              protocol: TCP
+            {{- end }}
+            {{- range $key, $value := .Values.worker.additionalExposedPorts }}
             - name: {{ $value.name }}
               containerPort: {{ $value.port }}
               protocol: {{ $value.protocol }}
-          {{- end }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /v1/info
