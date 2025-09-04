@@ -36,7 +36,7 @@ data:
   {{/* only check the version number if the image is not overriden in any way */}}
   {{- with .Values.image -}}
   {{- if and (eq .repository "trinodb/trino") (not .useRepositoryAsSoleImageReference) (not .registry) (not .digest) (gt (default $.Chart.AppVersion .tag | int ) 447 ) }}
-  # https://bugs.openjdk.org/browse/JDK-8329528
+    # https://bugs.openjdk.org/browse/JDK-8329528
     -XX:+UnlockDiagnosticVMOptions
     -XX:G1NumCollectionsKeepPinned=10000000
   {{- end }}{{/* if */}}
@@ -100,23 +100,42 @@ data:
     {{- end }}
   {{- end }}
 
-  {{- if .Values.resourceGroups }}
+ {{- if .Values.resourceGroups }}
+  {{- if eq .Values.resourceGroups.type "configmap" }}
   resource-groups.properties: |
-    {{- if and .Values.resourceGroups (eq (default "" .Values.resourceGroups.type) "configmap") }}
     resource-groups.configuration-manager=file
     resource-groups.config-file={{ .Values.server.config.path }}/resource-groups/resource-groups.json
-    {{- else if eq .Values.resourceGroups.type "properties" }}
+  {{- else if eq .Values.resourceGroups.type "properties" }}
   resource-groups.properties: |
     {{- if .Values.resourceGroups.properties }}
     {{- .Values.resourceGroups.properties | nindent 4 }}
-    {{- else }}
+    {{- else}}
     {{- fail "resourceGroups.properties is required when resourceGroups.type is 'properties'." }}
     {{- end }}
-    {{- else }}
-    {{- fail "Invalid resourceGroups.type value. It must be either 'configmap' or 'properties'." }}
-    {{- end }}
+  {{- else}}
+  {{- fail "Invalid resourceGroups.type value. It must be either 'configmap' or 'properties'." }}
   {{- end }}
+{{- end }}
 
+{{- if .Values.sessionProperties }}
+  {{- if eq .Values.sessionProperties.type "configmap" }}
+  session-property-config.properties: |
+    session-property-config.configuration-manager=file
+    session-property-manager.config-file={{ .Values.server.config.path }}/session-property-config.json
+
+  session-property-config.json: |
+    {{- .Values.sessionProperties.sessionPropertiesConfig | nindent 4 }}
+  {{- else if eq .Values.sessionProperties.type "properties" }}
+  session-property-config.properties: |
+    {{- if .Values.sessionProperties.properties }}
+    {{- .Values.sessionProperties.properties | nindent 4 }}
+    {{- else}}
+    {{- fail "sessionProperties.properties is required when sessionProperties.type is 'properties'." }}
+    {{- end }}
+  {{- else}}
+  {{- fail "Invalid sessionProperties.type value. It must be either 'configmap' or 'properties'." }}
+  {{- end }}
+{{- end }}
 
 {{- if .Values.server.exchangeManager }}
   exchange-manager.properties: |

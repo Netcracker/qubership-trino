@@ -64,9 +64,9 @@ server:
   exchangeManager: {}
   # server.exchangeManager -- Mandatory [exchange manager
   # configuration](https://trino.io/docs/current/admin/fault-tolerant-execution.html#id1).
-  # Used to set the name and location(s) of the spooling storage destination. To enable fault-tolerant execution,
-  # set the `retry-policy` property in `additionalConfigProperties`. Additional exchange manager configurations can be
-  # added to `additionalExchangeManagerProperties`.
+  # Used to set the name and location(s) of spooling data storage. For multiple destinations use a list or a comma separated URI locations.
+  # To enable fault-tolerant execution, set the `retry-policy` property in `additionalConfigProperties`.
+  # Additional exchange manager configurations can be added to `additionalExchangeManagerProperties`.
   # @raw
   # Example:
   # ```yaml
@@ -369,6 +369,50 @@ additionalExchangeManagerProperties: []
 #  - exchange.s3.aws-secret-key=your-secret-key
 # ```
 
+sessionProperties: {}
+# sessionProperties -- [Session properties manager config
+# file](https://trino.io/docs/current/admin/session-property-managers.html) is
+# mounted to {{ .Values.server.config.path }}/session-property-config.json
+# @raw
+# Set the type property to either:
+# * `configmap`, and provide the session properties manager file contents in `sessionPropertiesConfig`,
+# * `properties`, and provide configuration properties in `properties`.
+
+# Properties example:
+# ```yaml
+# type: properties
+# properties: |
+#   session-property-config.configuration-manager=file
+#   session-property-manager.config-file=/etc/trino/session-property-config.json
+
+# Configmap Example:
+# ```yaml
+# type: configmap
+# sessionPropertiesConfig: |-
+#   [
+#     {
+#       "group": "global.*",
+#       "sessionProperties": {
+#         "query_max_execution_time": "8h"
+#       }
+#     },
+#     {
+#       "group": "global.interactive.*",
+#       "sessionProperties": {
+#         "query_max_execution_time": "1h"
+#       }
+#     },
+#     {
+#       "group": "global.pipeline.*",
+#       "clientTags": ["etl"],
+#       "sessionProperties": {
+#         "scale_writers": "true",
+#         "hive.insert_existing_partitions_behavior": "overwrite"
+#       }
+#     }
+#   ]
+# ```
+
 eventListenerProperties: []
 # eventListenerProperties -- [Event
 # listener](https://trino.io/docs/current/develop/event-listener.html#event-listener)
@@ -530,11 +574,6 @@ service:
   # automatically](https://kubernetes.io/docs/concepts/services-networking/service/#nodeport-custom-port).
   nodePort: ""
 
-#service:
-#  type: NodePort
-#  port: 8080
-#  nodePort: 32018
-
 auth: {}
 # auth -- Available authentication methods.
 # @raw
@@ -553,7 +592,7 @@ auth: {}
 # ```
 # Set the name of a secret containing this file in the group.db key
 # ```yaml
-#  groupAuthSecret: "trino-group-authentication"
+#  groupsAuthSecret: "trino-groups-authentication"
 # ```
 
 serviceAccount:
@@ -905,6 +944,33 @@ worker:
   tolerations: []
 
   affinity: {}
+
+  topologySpreadConstraints: []
+  # worker.topologySpreadConstraints -- Configure [topology spread
+  # constraints](https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/)
+  # to control how worker pods are spread across your cluster among failure-domains
+  # such as nodes, zones, and regions. This is a best practice for achieving high
+  # availability and preventing resource hotspots.
+  #
+  # @raw
+  # Example of spreading workers across hostnames and zones:
+  # ```yaml
+  # topologySpreadConstraints:
+  #   - maxSkew: 1
+  #     topologyKey: "kubernetes.io/hostname"
+  #     whenUnsatisfiable: "ScheduleAnyway"
+  #     labelSelector:
+  #       matchLabels:
+  #         app.kubernetes.io/name: trino
+  #         app.kubernetes.io/component: worker
+  #   - maxSkew: 1
+  #     topologyKey: "topology.kubernetes.io/zone"
+  #     whenUnsatisfiable: "DoNotSchedule"
+  #     labelSelector:
+  #       matchLabels:
+  #         app.kubernetes.io/name: trino
+  #         app.kubernetes.io/component: worker
+  # ```
 
   additionalConfigFiles: {}
   # worker.additionalConfigFiles -- Additional config files placed in the default configuration directory.

@@ -215,16 +215,16 @@ spec:
               containerPort: {{ $workerJmx.serverPort }}
               protocol: TCP
             {{- end }}
-          {{- if .Values.server.config.https.enabled }}
-          - name: https
-            containerPort: {{ .Values.server.config.https.port }}
-            protocol: TCP
-          {{- end }}
-          {{- range $key, $value := .Values.worker.additionalExposedPorts }}
+            {{- if .Values.server.config.https.enabled }}
+            - name: https
+              containerPort: {{ .Values.server.config.https.port }}
+              protocol: TCP
+            {{- end }}
+            {{- range $key, $value := .Values.worker.additionalExposedPorts }}
             - name: {{ $value.name }}
               containerPort: {{ $value.port }}
               protocol: {{ $value.protocol }}
-          {{- end }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /v1/info
@@ -247,19 +247,22 @@ spec:
               {{- if .Values.worker.gracefulShutdown.enabled }}
               {{- fail "The `worker.lifecycle` configuration conflicts with `worker.gracefulShutdown`. Either disable `worker.gracefulShutdown` and apply the related configurations manually, or remove `worker.lifecycle`." }}
               {{- end }}
-              {{- toYaml .Values.worker.lifecycle | nindent 12 }}
+              {{- tpl (toYaml .Values.worker.lifecycle) . | nindent 12 }}
               {{- else if .Values.worker.gracefulShutdown.enabled }}
               preStop:
                 exec:
                   command:
                     - /bin/sh
                     - -c
-                    - >-
-                      curl -v -X PUT
-                      -d '"SHUTTING_DOWN"'
-                      -H 'Content-type: application/json'
-                      -H 'X-Trino-User: admin'
+                    - |-
+                    # send shutdown request to worker
+                    curl -v -X PUT \
+                      -d '"SHUTTING_DOWN"' \
+                      -H 'Content-type: application/json' \
+                      -H 'X-Trino-User: admin' \
                       http://localhost:{{- .Values.service.port -}}/v1/info/state
+                    # wait for shutdown to complete
+                    tail --pid=1 -f /dev/null
               {{- end }}
           resources:
             {{- toYaml .Values.worker.resources | nindent 12 }}
@@ -287,6 +290,10 @@ spec:
       {{- end }}
       {{- with .Values.worker.nodeSelector }}
       nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.topologySpreadConstraints }}
+      topologySpreadConstraints:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.worker.affinity }}

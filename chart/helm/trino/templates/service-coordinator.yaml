@@ -28,11 +28,11 @@ spec:
       {{- end }}
   # Qubership custom change: support secure connection    
   {{- if .Values.server.config.https.enabled }}
-      - port: { { .Values.server.config.https.port } }
-        targetPort: https
-        protocol: TCP
-        name: https
-        nodePort: {{ .Values.server.config.https.nodeport }}
+    - port: {{ .Values.server.config.https.port }}
+      targetPort: https
+      protocol: TCP
+      name: https
+      nodePort: {{ .Values.server.config.https.nodeport }}
   {{- end }}
       #--Qubership custom change---#
   {{- if $coordinatorJmx.exporter.enabled }}
