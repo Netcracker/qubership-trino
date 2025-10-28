@@ -77,9 +77,8 @@ helm.sh/chart: {{ include "trino.chart" . }}
 {{- if .Chart.AppVersion }}
 #--Qubership custom-label-value-change-
 app.kubernetes.io/version: {{ splitList ":" ( include "trino_image" . ) | last | quote }}
-#--Qubership custom-label-value-change-
 {{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{ include "allObjectsLabels" .}}
 {{- if .Values.commonLabels }}
 {{ tpl (toYaml .Values.commonLabels) . }}
 {{- end }}

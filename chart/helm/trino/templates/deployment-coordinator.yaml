@@ -8,7 +8,6 @@ metadata:
     {{- include "trino.labels" . | nindent 4 }}
 # Qubership custom change: Qubership release support
     {{- include "to_add_to_deployment_labels" . | nindent 4 }}
-    {{- include "allObjectsLabels" . | nindent 4 }}
     app.kubernetes.io/component: {{ default "trino" .Values.trinoComponentLabel }}
     trino.io/network-policy-protection: {{ ternary "enabled" "disabled" .Values.networkPolicy.enabled }}
     {{- if .Values.coordinator.labels }}
@@ -43,7 +42,6 @@ spec:
         {{- include "trino.labels" . | nindent 8 }}
 # Qubership custom change: Qubership release support
         {{- include "to_add_to_deployment_labels" . | nindent 8 }}
-        {{- include "allObjectsLabels" . | nindent 8 }}
         app.kubernetes.io/component: {{ default "trino" .Values.trinoComponentLabel }}
         trino.io/network-policy-protection: {{ ternary "enabled" "disabled" .Values.networkPolicy.enabled }}
         {{- if .Values.coordinator.labels }}

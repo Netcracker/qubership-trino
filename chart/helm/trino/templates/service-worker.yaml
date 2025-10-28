@@ -7,7 +7,6 @@ metadata:
   labels:
     {{- include "trino.labels" . | nindent 4 }}
     # Qubership custom change: Qubership release support
-    {{- include "allObjectsLabels" . | nindent 4 }}
     app.kubernetes.io/component: worker
   annotations:
     {{- toYaml .Values.service.annotations | nindent 4 }}
