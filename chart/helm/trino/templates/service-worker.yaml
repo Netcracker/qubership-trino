@@ -6,6 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "trino.labels" . | nindent 4 }}
+    {{- include "to_add_to_service_labels" . | nindent 4 }}
     # Qubership custom change: Qubership release support
     app.kubernetes.io/component: worker
   annotations:
