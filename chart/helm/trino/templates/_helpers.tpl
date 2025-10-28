@@ -79,9 +79,6 @@ helm.sh/chart: {{ include "trino.chart" . }}
 app.kubernetes.io/version: {{ splitList ":" ( include "trino_image" . ) | last | quote }}
 {{- end }}
 {{ include "allObjectsLabels" .}}
-{{- if .Values.commonLabels }}
-{{ tpl (toYaml .Values.commonLabels) . }}
-{{- end }}
 {{- end }}
 
 {{/*

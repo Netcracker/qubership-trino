@@ -1212,12 +1212,6 @@ serviceMonitor:
   #   labels:
   #     prometheus: my-prometheus
   # ```
-
-# -- Labels that get applied to every resource's metadata
-# Qubership custom change: Qubership release support
-commonLabels:
-  app.kubernetes.io/part-of: trino
-
 ingress:
   enabled: false
   className: ""
