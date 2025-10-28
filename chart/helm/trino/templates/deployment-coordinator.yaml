@@ -23,7 +23,7 @@ spec:
   selector:
     matchLabels:
       {{- include "trino.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: {{ default "trino" .Values.trinoComponentLabel }}
+      app.kubernetes.io/component: coordinator
   template:
     metadata:
       annotations:
