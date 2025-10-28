@@ -77,8 +77,12 @@ helm.sh/chart: {{ include "trino.chart" . }}
 {{- if .Chart.AppVersion }}
 #--Qubership custom-label-value-change-
 app.kubernetes.io/version: {{ splitList ":" ( include "trino_image" . ) | last | quote }}
+#--Qubership custom-label-value-change-
 {{- end }}
-{{ include "allObjectsLabels" .}}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.commonLabels }}
+{{ tpl (toYaml .Values.commonLabels) . }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -187,9 +191,3 @@ Hive Metastore URI
 {{- define "hive.metastore.uri" -}}
 {{ printf "thrift://%s:%v" (.Values.hive.host) (.Values.hive.port) }} 
 {{- end -}}
-{{/*
-All object labels for Qubership release
-*/}}
-{{- define "allObjectsLabels" -}}
-app.kubernetes.io/part-of: trino
-{{- end }}
