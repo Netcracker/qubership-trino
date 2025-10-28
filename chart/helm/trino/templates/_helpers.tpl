@@ -106,6 +106,7 @@ To add to deployment label for Qubership release
 */}}
 {{- define "to_add_to_deployment_labels" -}}
 name: {{ include "trino.name" . }}
+app.kubernetes.io/technology: java-others
 {{- end }}
 
 {{/*
@@ -190,3 +191,9 @@ Hive Metastore URI
 {{- define "hive.metastore.uri" -}}
 {{ printf "thrift://%s:%v" (.Values.hive.host) (.Values.hive.port) }} 
 {{- end -}}
+{{/*
+All object labels for Qubership release
+*/}}
+{{- define "allObjectsLabels" -}}
+app.kubernetes.io/part-of: trino
+{{- end }}
