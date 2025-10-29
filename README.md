@@ -196,6 +196,14 @@ name: {{ include "trino.name" . }}
 {{- end }}
 
 {{/*
+To add to deployment label for Qubership release
+*/}}
+{{- define "to_add_to_deployment_labels" -}}
+name: {{ include "trino.name" . }}
+app.kubernetes.io/technology: java-others
+{{- end }}
+
+{{/*
 Processed by cert-manager label for Qubership release
 */}}
 {{- define "cert_manager_label" -}}
@@ -391,6 +399,22 @@ spec:
   {{- end }}
       #--Qubership custom change---#
 ```
+### `service-worker.yaml`
+
+```yaml
+{{- $workerJmx := merge .Values.jmx.worker (omit .Values.jmx "coordinator" "worker") -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "trino.fullname" . }}-worker
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "trino.labels" . | nindent 4 }}
+# Qubership custom change: Qubership release support    
+    {{- include "to_add_to_service_labels" . | nindent 4 }}
+    
+```
+
 ---
 extrasecrets.yaml, secret-tls.yaml, tls-certificate.yaml, tls-issuer.yaml these files are added to provide complete TLS support and enable integration with cert-manager for secure HTTPS communication.
 

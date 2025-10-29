@@ -106,6 +106,7 @@ To add to deployment label for Qubership release
 */}}
 {{- define "to_add_to_deployment_labels" -}}
 name: {{ include "trino.name" . }}
+app.kubernetes.io/technology: java-others
 {{- end }}
 
 {{/*
