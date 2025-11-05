@@ -3,7 +3,7 @@ ENV MAVEN_REPO=https://repo1.maven.org/maven2
 
 
 RUN apk add --no-cache curl
-RUN mkdir -p /patchedlibs && \
+RUN mkdir -p /patchedlibs
 
 FROM trinodb/trino:478
 
