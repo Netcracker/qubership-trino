@@ -8,7 +8,7 @@ RUN mkdir -p /patchedlibs && \
     curl -k -L ${MAVEN_REPO}/org/eclipse/jetty/http2/jetty-http2-common/12.0.25/jetty-http2-common-12.0.25.jar --output /patchedlibs/jetty-http2-common-12.0.25.jar && \
     curl -k -L ${MAVEN_REPO}/io/netty/netty-codec-http2/4.2.4.Final/netty-codec-http2-4.2.4.Final.jar --output /patchedlibs/netty-codec-http2-4.2.4.Final.jar 
 
-FROM trinodb/trino:476
+FROM trinodb/trino:478
 
 USER root
 
