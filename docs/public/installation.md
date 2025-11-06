@@ -625,9 +625,9 @@ To secure connection to Hive Metastore `hive.metastore.thrift.client.*` properti
     
     <-----Secure connection to Hive Metastore-------->
     hive.metastore.thrift.client.ssl.enabled=true
-    hive.metastore.thrift.client.ssl.key=/usr/lib/jvm/temurin/jdk-24+36/lib/security/cacerts
+    hive.metastore.thrift.client.ssl.key=/usr/lib/jvm/jdk-25+36/lib/security/cacerts
     hive.metastore.thrift.client.ssl.key-password=changeit
-    hive.metastore.thrift.client.ssl.trust-certificate=/usr/lib/jvm/temurin/jdk-24+36/lib/security/cacerts
+    hive.metastore.thrift.client.ssl.trust-certificate=/usr/lib/jvm/jdk-25+36/lib/security/cacerts
     hive.metastore.thrift.client.ssl.trust-certificate-password=changeit
 ```
 
