@@ -7,7 +7,7 @@
 * [Helm Chart Customizations](#helm-chart-customizations)
 
 ## Overview
-Trino is a distributed SQL query engine for Big Data analytics.  
+Trino is a distributed SQL query engine for Big Data analytics.  msdn,sdm.ds
 It consists of coordinator, workers and a client should be used to submit queries to Trino.
 
 This repo contains helm charts and images to run trino on kubernetes. The trino charts based on [trino charts](https://github.com/trinodb/charts) . The trino images include some additional improvements, for example, to work with S3 or with certificates.
