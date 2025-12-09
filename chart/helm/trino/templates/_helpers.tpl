@@ -80,7 +80,9 @@ app.kubernetes.io/version: {{ splitList ":" ( include "trino_image" . ) | last |
 #--Qubership custom-label-value-change-
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+#--Qubership custom change-
 {{ include "sessionid.label" . }}
+#--Qubership custom change-
 {{- if .Values.commonLabels }}
 {{ tpl (toYaml .Values.commonLabels) . }}
 {{- end }}
