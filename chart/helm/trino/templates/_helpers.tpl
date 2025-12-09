@@ -80,10 +80,35 @@ app.kubernetes.io/version: {{ splitList ":" ( include "trino_image" . ) | last |
 #--Qubership custom-label-value-change-
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{ include "sessionid.label" . }}
 {{- if .Values.commonLabels }}
 {{ tpl (toYaml .Values.commonLabels) . }}
 {{- end }}
 {{- end }}
+
+#--Qubership custom change---
+{{/*
+Template labels
+*/}}
+{{- define "all_trino_template.labels" -}}
+helm.sh/chart: {{ include "trino.chart" . }}
+{{ include "trino.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+#--Qubership custom-label-value-change-
+app.kubernetes.io/version: {{ splitList ":" ( include "trino_image" . ) | last | quote }}
+#--Qubership custom-label-value-change-
+{{- if .Values.commonLabels }}
+{{ tpl (toYaml .Values.commonLabels) . }}
+{{- end }}
+{{- end }}
+
+{{/*
+sessionId label
+*/}}
+{{- define "sessionid.label" -}}
+deployment.netcracker.com/sessionId: default-session-id
+{{- end }}
+#--Qubership custom change---
 
 {{/*
 Selector labels
