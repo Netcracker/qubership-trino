@@ -99,6 +99,7 @@ helm.sh/chart: {{ include "trino.chart" . }}
 #--Qubership custom-label-value-change-
 app.kubernetes.io/version: {{ splitList ":" ( include "trino_image" . ) | last | quote }}
 #--Qubership custom-label-value-change-
+{{- end }}
 {{- if .Values.commonLabels }}
 {{ tpl (toYaml .Values.commonLabels) . }}
 {{- end }}
