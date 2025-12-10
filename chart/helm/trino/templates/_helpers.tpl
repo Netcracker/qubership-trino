@@ -101,7 +101,6 @@ app.kubernetes.io/version: {{ splitList ":" ( include "trino_image" . ) | last |
 {{ tpl (toYaml .Values.commonLabels) . }}
 {{- end }}
 {{- end }}
-
 #--Qubership custom change---
 
 {{/*
