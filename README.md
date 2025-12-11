@@ -180,6 +180,25 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 {{- end }}
 
+
+#--Qubership custom change---
+{{/*
+Template labels
+*/}}
+{{- define "all_trino_template.labels" -}}
+helm.sh/chart: {{ include "trino.chart" . }}
+{{ include "trino.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+#--Qubership custom-label-value-change-
+app.kubernetes.io/version: {{ splitList ":" ( include "trino_image" . ) | last | quote }}
+#--Qubership custom-label-value-change-
+{{- end }}
+{{- if .Values.commonLabels }}
+{{ tpl (toYaml .Values.commonLabels) . }}
+{{- end }}
+{{- end }}
+#--Qubership custom change---
+
 # Qubership custom change: Qubership release support
 {{/*
 To add to service labels for Qubership release
@@ -225,6 +244,8 @@ spec:
         labels:
             # Qubership custom change: Qubership release support
             {{- include "to_add_to_deployment_labels" . | nindent 8 }}
+# Qubership custom change: Qubership release support      
+            {{- include "all_trino_template.labels" . | nindent 8 }}
     spec:
       {{- if .Values.coordinator.priorityClassName }}
       priorityClassName: {{ .Values.coordinator.priorityClassName }}
@@ -290,6 +311,8 @@ spec:
         
 # Qubership custom change: Qubership release support
         {{- include "to_add_to_deployment_labels" . | nindent 8 }}
+# Qubership custom change: Qubership release support      
+        {{- include "all_trino_template.labels" . | nindent 8 }}
     spec:
       {{- if .Values.worker.priorityClassName }}
       priorityClassName: {{ .Values.worker.priorityClassName }}

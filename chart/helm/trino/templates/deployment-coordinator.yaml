@@ -42,7 +42,8 @@ spec:
       {{- end }}
 
       labels:
-        {{- include "trino.labels" . | nindent 8 }}
+# Qubership custom change: Qubership release support      
+        {{- include "all_trino_template.labels" . | nindent 8 }}
 # Qubership custom change: Qubership release support
         {{- include "to_add_to_deployment_labels" . | nindent 8 }}
         app.kubernetes.io/component: coordinator

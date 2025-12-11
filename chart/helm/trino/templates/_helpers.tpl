@@ -85,6 +85,24 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 {{- end }}
 
+#--Qubership custom change---
+{{/*
+Template labels
+*/}}
+{{- define "all_trino_template.labels" -}}
+helm.sh/chart: {{ include "trino.chart" . }}
+{{ include "trino.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+#--Qubership custom-label-value-change-
+app.kubernetes.io/version: {{ splitList ":" ( include "trino_image" . ) | last | quote }}
+#--Qubership custom-label-value-change-
+{{- end }}
+{{- if .Values.commonLabels }}
+{{ tpl (toYaml .Values.commonLabels) . }}
+{{- end }}
+{{- end }}
+#--Qubership custom change---
+
 {{/*
 Selector labels
 */}}
