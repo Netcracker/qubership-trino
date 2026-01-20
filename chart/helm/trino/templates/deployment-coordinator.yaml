@@ -64,6 +64,11 @@ spec:
       shareProcessNamespace: {{ .Values.shareProcessNamespace.coordinator }}
       {{- end }}
       volumes:
+# Qubership custom change: support Read only filesystem
+        - name: common-space     
+          emptyDir: {}   
+        - name: java-cacerts-dir     
+          emptyDir: {}
         - name: config-volume
           configMap:
             name: {{ template "trino.coordinator" . }}
@@ -176,7 +181,13 @@ spec:
               name: {{ .Values.tls.secretMounts.name }}
             {{- end }}
             {{- end }}
-# Qubership custom change: support secure connections
+# Qubership custom change: support Read only filesystem
+            - name: common-space     
+              mountPath: /tmp   
+            - name: java-cacerts-dir     
+              mountPath: /java-security
+              subPath: java-security
+# Qubership custom change: support secure connections              
             {{- if and .Values.tls.enabled .Values.tls.generateCerts.enabled }}
             {{- range .Values.tls.generateCerts.secretMounts }}
             - name: {{ $.Values.tls.generateCerts.secretName }}-volume

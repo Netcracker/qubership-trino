@@ -546,6 +546,8 @@ sidecarContainers: {}
 securityContext:
   runAsUser: 1000
   runAsGroup: 1000
+# Qubership custom change: support Read only filesystem
+  readOnlyRootFilesystem: true
 
 # -- [Container security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container) configuration.
 containerSecurityContext:
