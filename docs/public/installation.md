@@ -146,6 +146,23 @@ The profile resources are specified below:
 | Coordinator |     2     |      6G      |          1           |
 |   Worker    |     2     |      8G      |          3           |
 
+### Security Hardening: Read-Only Root Filesystem
+
+To improve the security posture of the application, the deployment is configured with a read-only root filesystem. This prevents the container process from writing to any location on the disk except for specifically designated volumes.
+The following settings are applied:
+```
+securityContext:
+  readOnlyRootFilesystem: true
+```  
+ Since the root filesystem is locked, we use emptyDir volumes to provide writable space for temporary operations and for certificates storage. Automated Volume Mounts so no need to manually configure additional storage. 
+ The following volumes are already provisioned in the deployment to handle standard application requirements:
+
+ | Volume Name | Mount Path | Sub Path | Purpose | 
+ |:-------------:|:---------:|:------------:|:-------------:|
+ | common-space | /tmp | tmp-data | Provides a writable area for temporary files, logs, and general OS-level buffers. |
+ | common-space | /data/trino | trino-var | Stores the PID file (launcher.pid), and internal logs. |
+ | java-cacerts-dir| /java-security | java-security | Used specifically for managing Java truststores and security certificates at runtime. |
+
 <!-- #GFCFilterMarkerEnd# -->
 # Parameters
 
