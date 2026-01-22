@@ -182,8 +182,12 @@ spec:
             {{- end }}
             {{- end }}
 # Qubership custom change: support Read only filesystem
-            - name: common-space     
-              mountPath: /tmp   
+            - name: common-space
+              mountPath: /tmp
+              subPath: tmp-data  
+            - name: common-space
+              mountPath: /data/trino
+              subPath: trino-var  
             - name: java-cacerts-dir     
               mountPath: /java-security
               subPath: java-security
