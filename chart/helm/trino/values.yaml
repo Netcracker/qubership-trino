@@ -485,7 +485,9 @@ additionalCatalogs: {}
 # additionalCatalogs -- Deprecated, use `catalogs` instead. Configure additional
 # [catalogs](https://trino.io/docs/current/installation/deployment.html#catalog-properties).
 
-env: []
+env:
+  name: TRINO_HISTORY_FILE
+  value: "/tmp/.trino_history"
 # env -- additional environment variables added to every pod, specified as a list with explicit values
 # @raw
 # Example:
