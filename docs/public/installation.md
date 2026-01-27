@@ -163,6 +163,17 @@ securityContext:
  | common-space | /data/trino | trino-var | Stores the PID file (launcher.pid), and internal logs. |
  | java-cacerts-dir| /java-security | java-security | Used specifically for managing Java truststores and security certificates at runtime. |
 
+
+#### Trino CLI History Configuration
+ By default, the Trino CLI attempts to write command history to the user's home directory (e.g., /home/trino/.trino_history). In a read-only filesystem environment, this will cause the CLI to fail or throw errors upon execution.
+
+To ensure the CLI remains functional, the TRINO_HISTORY_FILE environment variable is used to redirect the history file to the writable common-space volume mounted at /tmp.
+
+Required Environment Variable: 
+| Variable Name | Value | Purpose | 
+|:--- |:--- |:--- | 
+| TRINO_HISTORY_FILE | /tmp/.trino_history | Redirects CLI command history to a writable temporary volume. |
+
 <!-- #GFCFilterMarkerEnd# -->
 # Parameters
 
