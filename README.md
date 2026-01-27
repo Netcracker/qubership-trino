@@ -31,6 +31,10 @@ CUSTOM CHANGES: The following parameters have been added or modified to support 
 image:
     repository: ghcr.io/netcracker/qubership-trino
     tag: main
+env:
+# Qubership custom change: support Read only filesystem 
+  - name: TRINO_HISTORY_FILE
+    value: "/tmp/.trino_history"    
 server:
   node:
   config:
@@ -71,6 +75,8 @@ containerSecurityContext:
   runAsNonRoot: true
   seccompProfile:
     type: RuntimeDefault
+# Qubership custom change: support Read only filesystem    
+  readOnlyRootFilesystem: true  
 coordinator:
   priorityClassName: ~
   
@@ -250,7 +256,12 @@ spec:
       {{- if .Values.coordinator.priorityClassName }}
       priorityClassName: {{ .Values.coordinator.priorityClassName }}
       {{- end }}
-      volumes: 
+      volumes:
+# Qubership custom change: support Read only filesystem
+        - name: common-space     
+          emptyDir: {}   
+        - name: java-cacerts-dir     
+          emptyDir: {} 
         {{- if and .Values.server.config.https.enabled .Values.tls.enabled }}
         {{- if not .Values.tls.generateCerts.enabled }}
         - name: {{ .Values.tls.secretMounts.name }}
@@ -273,6 +284,16 @@ spec:
               name: {{ .Values.tls.secretMounts.name }}
             {{- end }}
             {{- end }}
+        # Qubership custom change: support Read only filesystem
+              - name: common-space
+                mountPath: /tmp
+                subPath: tmp-data  
+              - name: common-space
+                mountPath: /data/trino
+                subPath: trino-var  
+              - name: java-cacerts-dir     
+                mountPath: /java-security
+                subPath: java-security
             # Qubership custom change: support secure connections
             {{- if and .Values.tls.enabled .Values.tls.generateCerts.enabled }}
             {{- range .Values.tls.generateCerts.secretMounts }}
@@ -318,6 +339,11 @@ spec:
       priorityClassName: {{ .Values.worker.priorityClassName }}
       {{- end }}
       volumes:
+      # Qubership custom change: support Read only filesystem
+        - name: common-space     
+          emptyDir: {}   
+        - name: java-cacerts-dir     
+          emptyDir: {} 
         {{- if and .Values.server.config.https.enabled .Values.tls.enabled }}
         {{- if not .Values.tls.generateCerts.enabled }}
         - name: {{ .Values.tls.secretMounts.name }}
@@ -334,6 +360,16 @@ spec:
        containers:
         - name: {{ .Chart.Name }}-worker
           volumeMounts:
+          # Qubership custom change: support Read only filesystem
+            - name: common-space
+              mountPath: /tmp
+              subPath: tmp-data  
+            - name: common-space
+              mountPath: /data/trino
+              subPath: trino-var
+            - name: java-cacerts-dir     
+              mountPath: /java-security
+              subPath: java-security 
             {{- if and .Values.server.config.https.enabled .Values.tls.enabled }}
             {{- if not .Values.tls.generateCerts.enabled }}
             - mountPath: {{ .Values.tls.secretMounts.path }}

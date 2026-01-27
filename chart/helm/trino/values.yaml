@@ -486,6 +486,7 @@ additionalCatalogs: {}
 # [catalogs](https://trino.io/docs/current/installation/deployment.html#catalog-properties).
 
 env:
+# Qubership custom change: support Read only filesystem 
   - name: TRINO_HISTORY_FILE
     value: "/tmp/.trino_history"
 # env -- additional environment variables added to every pod, specified as a list with explicit values
