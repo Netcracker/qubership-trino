@@ -10,6 +10,7 @@ The following topics are covered in this chapter:
         * [Small](#small)
         * [Medium](#medium)
         * [Large](#large)
+    * [Read Only Root Filesystem](#read-only-root-filesystem)    
 * [Parameters](#parameters)
   * [Enabling Password Authentication](#enabling-password-authentication)
   * [HTTPS/TLS for Trino](#httpstls-for-trino)
@@ -146,7 +147,7 @@ The profile resources are specified below:
 | Coordinator |     2     |      6G      |          1           |
 |   Worker    |     2     |      8G      |          3           |
 
-### Security Hardening: Read-Only Root Filesystem
+### Read Only Root Filesystem
 
 To improve the security posture of the application, the deployment is configured with a read-only root filesystem. This prevents the container process from writing to any location on the disk except for specifically designated volumes.
 The following settings are applied:
@@ -173,6 +174,8 @@ Required Environment Variable:
 | Variable Name | Value | Purpose | 
 |:--- |:--- |:--- | 
 | TRINO_HISTORY_FILE | /tmp/.trino_history | Redirects CLI command history to a writable temporary volume. |
+
+**Note**: This configuration is already pre-set in the values.yaml file and requires no manual intervention.
 
 <!-- #GFCFilterMarkerEnd# -->
 # Parameters
