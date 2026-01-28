@@ -485,7 +485,10 @@ additionalCatalogs: {}
 # additionalCatalogs -- Deprecated, use `catalogs` instead. Configure additional
 # [catalogs](https://trino.io/docs/current/installation/deployment.html#catalog-properties).
 
-env: []
+env:
+# Qubership custom change: support Read only filesystem 
+  - name: TRINO_HISTORY_FILE
+    value: "/tmp/.trino_history"
 # env -- additional environment variables added to every pod, specified as a list with explicit values
 # @raw
 # Example:
@@ -547,6 +550,8 @@ securityContext:
   runAsUser: 1000
   runAsGroup: 1000
 
+  
+
 # -- [Container security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container) configuration.
 containerSecurityContext:
   # -- Control whether a process can gain more privileges than its parent process.
@@ -560,6 +565,8 @@ containerSecurityContext:
   runAsNonRoot: true
   seccompProfile:
     type: RuntimeDefault
+# Qubership custom change: support Read only filesystem    
+  readOnlyRootFilesystem: true  
 
 shareProcessNamespace:
   coordinator: false

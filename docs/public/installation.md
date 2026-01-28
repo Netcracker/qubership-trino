@@ -10,6 +10,7 @@ The following topics are covered in this chapter:
         * [Small](#small)
         * [Medium](#medium)
         * [Large](#large)
+    * [Read Only Root Filesystem](#read-only-root-filesystem)    
 * [Parameters](#parameters)
   * [Enabling Password Authentication](#enabling-password-authentication)
   * [HTTPS/TLS for Trino](#httpstls-for-trino)
@@ -147,6 +148,40 @@ The profile resources are specified below:
 |   Worker    |     2     |      8G      |          3           |
 
 <!-- #GFCFilterMarkerEnd# -->
+
+### Read Only Root Filesystem
+
+To improve the security posture of the application, the deployment is configured with a read-only root filesystem. This prevents the container process from writing to any location on the disk except for specifically designated volumes.
+
+The following settings are applied:
+```
+securityContext:
+  readOnlyRootFilesystem: true
+```  
+Since the root filesystem is locked, we use emptyDir volumes to provide writable space for temporary operations and for certificates storage. Automated Volume Mounts so no need to manually configure additional storage. 
+
+The following volumes are already provisioned in the deployment to handle standard application requirements:
+
+ | Volume Name | Mount Path | Sub Path | Purpose | 
+ |:-------------:|:---------:|:------------:|:-------------:|
+ | common-space | /tmp | tmp-data | Provides a writable area for temporary files, logs, and general OS-level buffers. |
+ | common-space | /data/trino | trino-var | Stores the PID file (launcher.pid), and internal logs. |
+ | java-cacerts-dir| /java-security | java-security | Used specifically for managing Java truststores and security certificates at runtime. |
+
+
+#### Trino CLI History Configuration
+
+By default, the Trino CLI attempts to write command history to the user's home directory, for example, /home/trino/.trino_history. In a read-only filesystem environment, this will cause the CLI to fail or throw errors upon execution.
+
+To ensure the CLI remains functional, the TRINO_HISTORY_FILE environment variable is used to redirect the history file to the writable common-space volume mounted at /tmp.
+
+Required Environment Variable: 
+| Variable Name | Value | Purpose | 
+|:--- |:--- |:--- | 
+| TRINO_HISTORY_FILE | /tmp/.trino_history | Redirects CLI command history to a writable temporary volume. |
+
+**Note**: This configuration is already pre-set in the values.yaml file and requires no manual intervention.
+
 # Parameters
 
 This chart is based on community chart: https://github.com/trinodb/charts with a few minor changes.
