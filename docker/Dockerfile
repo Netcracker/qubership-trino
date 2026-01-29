@@ -12,7 +12,8 @@ USER root
 
 ENV TRUST_CERTS_DIR=/home/trino/trustcerts
 COPY docker/entrypoint.sh /opt/entrypoint.sh
-COPY --from=unpacker /patchedlibs/opensearch-common-2.19.4.jar /usr/lib/trino/plugin/opensearch/ 
+COPY --from=unpacker /patchedlibs/opensearch-common-2.19.4.jar \
+     /usr/lib/trino/plugin/opensearch/org.opensearch_opensearch-common-2.19.4.jar
 
 RUN mkdir ${TRUST_CERTS_DIR} && \
     chmod 777 ${JAVA_HOME}/lib/security/cacerts && \
