@@ -8,9 +8,9 @@ FROM trinodb/trino:479
 
 USER root
 
-COPY --from=builder /usr/lib64/libbrotlicommon.so.1.1.0 /usr/lib64/
-COPY --from=builder /usr/lib64/libbrotlidec.so.1.1.0 /usr/lib64/
-COPY --from=builder /usr/lib64/libbrotlienc.so.1.1.0 /usr/lib64/
+COPY --from=builder /usr/lib64/libbrotlicommon.so.1* /usr/lib64/
+COPY --from=builder /usr/lib64/libbrotlidec.so.1* /usr/lib64/
+COPY --from=builder /usr/lib64/libbrotlienc.so.1* /usr/lib64/
 COPY --from=builder /opensearch-common-2.19.4.jar /usr/lib/trino/plugin/opensearch/org.opensearch_opensearch-common-2.19.4.jar
 
 RUN ldconfig
