@@ -85,7 +85,7 @@ metadata:
     {{- include "trino.labels" . | nindent 4 }}
 spec:
   targetRefs:
-  - group: ""
+  - group: gateway.networking.k8s.io/v1
     kind: Service
     name: {{ $fullname }}
   validation:
