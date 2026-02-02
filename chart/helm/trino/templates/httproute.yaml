@@ -45,9 +45,9 @@ spec:
           {{- end }}
     {{- end }}
 
----
 
 {{- if .Values.gateway.redirectRoute.enabled -}}
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -73,9 +73,9 @@ spec:
         statusCode: 301
 {{- end }}
 
----
 
 {{- if .Values.gateway.backendTLSPolicy.enabled -}}
+---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: BackendTLSPolicy
 metadata:
