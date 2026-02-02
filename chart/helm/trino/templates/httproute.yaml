@@ -76,7 +76,7 @@ spec:
 
 {{- if .Values.gateway.backendTLSPolicy.enabled -}}
 ---
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: BackendTLSPolicy
 metadata:
   name: {{ $coordinatorName }}
