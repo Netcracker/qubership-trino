@@ -10,8 +10,10 @@
 # coordinatorNameOverride: trino-coordinator-adhoc
 # workerNameOverride: trino-worker-adhoc
 # nameOverride: trino-adhoc
+# fullnameOverride: trino-adhoc
 # ```
 nameOverride:
+fullnameOverride:
 coordinatorNameOverride:
 workerNameOverride:
 
@@ -73,7 +75,8 @@ server:
   # server:
   #   exchangeManager:
   #     name: "filesystem"
-  #     baseDir: "/tmp/trino-local-file-system-exchange-manager"
+  #     baseDir:
+  #       - "/tmp/trino-local-file-system-exchange-manager"
   # additionalConfigProperties:
   #   - retry-policy=TASK
   # additionalExchangeManagerProperties:
@@ -1109,7 +1112,7 @@ jmx:
   exporter:
     # jmx.exporter.enabled -- Set to true to export JMX Metrics via HTTP for [Prometheus](https://github.com/prometheus/jmx_exporter) consumption
     enabled: false
-    image: bitnami/jmx-exporter:latest
+    image: bitnamilegacy/jmx-exporter:1.4.0
     pullPolicy: Always
     port: 5556
     configProperties: ""
@@ -1192,6 +1195,9 @@ serviceMonitor:
     prometheus: kube-prometheus
   # serviceMonitor.interval -- The serviceMonitor web endpoint interval
   interval: "30s"
+  # serviceMonitor.scrapeTimeout -- Maximum time to wait for a response.
+  # If empty or not set, uses the Prometheus global default.
+  scrapeTimeout: ""
   coordinator: {}
   # serviceMonitor.coordinator -- Override ServiceMonitor configurations for the Trino coordinator.
   # @raw
@@ -1247,6 +1253,73 @@ ingress:
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
+  # ```
+
+gateway:
+  # gateway.enabled -- Set to true to create HTTPRoute resources for [Kubernetes Gateway API](https://gateway-api.sigs.k8s.io/).
+  # The Gateway API is the successor to the Ingress API and provides more advanced routing capabilities.
+  # @raw
+  # > [!NOTE]
+  # > - Requires Gateway API CRDs to be installed in the cluster
+  # > - Not recommended to use together with `ingress.enabled` (choose one or the other)
+  # > - Requires a Gateway resource to be configured separately
+  enabled: false
+  annotations: {}
+  # gateway.annotations -- Annotations to add to the HTTPRoute resource.
+  # @raw
+  # Example:
+  # ```yaml
+  #  gateway.networking.k8s.io/example: "value"
+  # ```
+  parentRefs: []
+  # gateway.parentRefs -- References to the Gateway resources that this HTTPRoute should attach to.
+  # @raw
+  # Example:
+  # ```yaml
+  #  - name: trino-gateway
+  #    namespace: gateway-system
+  #    sectionName: https
+  # ```
+  hostnames: []
+  # gateway.hostnames -- Hostnames to match for routing traffic.
+  # @raw
+  # Example:
+  # ```yaml
+  #  - trino.example.com
+  #  - trino-prod.example.com
+  # ```
+  rules: []
+  # gateway.rules -- HTTPRoute rules for routing traffic to Trino.
+  # Each rule can use either the simplified `path` format for basic routing,
+  # or the full `matches` format for advanced use cases.
+  # @raw
+  # Simple path-based routing example:
+  # ```yaml
+  #  - path:
+  #      type: PathPrefix
+  #      value: /
+  #    filters:
+  #      - type: RequestHeaderModifier
+  #        requestHeaderModifier:
+  #          set:
+  #            - name: X-Forwarded-Proto
+  #              value: https
+  # ```
+  # Advanced matching example with headers:
+  # ```yaml
+  #  - matches:
+  #      - path:
+  #          type: PathPrefix
+  #          value: /ui
+  #        headers:
+  #          - name: X-Custom-Header
+  #            value: custom-value
+  #    filters:
+  #      - type: RequestHeaderModifier
+  #        requestHeaderModifier:
+  #          set:
+  #            - name: X-Forwarded-Proto
+  #              value: https
   # ```
 
 networkPolicy:
