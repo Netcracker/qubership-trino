@@ -1,4 +1,4 @@
-{{- if  .Values.gateway.enabled -}}
+{{- if .Values.gateway.enabled }}
 {{- $fullname := (include "trino.fullname" .) }}
 {{- $coordinatorName := (include "trino.coordinator" .) }}
 apiVersion: gateway.networking.k8s.io/v1
@@ -50,8 +50,51 @@ spec:
 
 ---
 
-{{- if  .Values.gateway.redirectRoute.enabled -}}
+{{- if  .Values.gateway.backendTLSPolicy.enabled }}
 {{- $fullname := (include "trino.fullname" .) }}
+{{- $coordinatorName := (include "trino.coordinator" .) }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: BackendTLSPolicy
+metadata:
+  name: {{ $coordinatorName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    tier: trino
+    component: trino-httproute
+    release: {{ .Release.Name }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    {{- include "trino.labels" . | nindent 4 }}
+  {{- with .Values.gateway.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io/v1
+    kind: Service
+    name: {{ $fullname }}
+  validation:
+    {{- if  .Values.gateway.backendTLSPolicy.hostname }}
+    hostname: {{ tpl .Values.gateway.backendTLSPolicy.hostname . | quote }}
+    {{- end }}
+    {{- if  .Values.gateway.backendTLSPolicy.subjectAltNames }}
+    subjectAltNames:
+    {{- toYaml .Values.gateway.backendTLSPolicy.subjectAltNames | nindent 6 }}
+    {{- end }}
+    {{- if  .Values.gateway.backendTLSPolicy.caCertificateRefs }}
+    caCertificateRefs:
+    {{- toYaml .Values.gateway.backendTLSPolicy.caCertificateRefs | nindent 6 }}
+    {{- end }}
+    {{- if  .Values.gateway.backendTLSPolicy.wellKnownCACertificates }}
+    wellKnownCACertificates: {{ tpl .Values.gateway.backendTLSPolicy.wellKnownCACertificates . | quote }}
+    {{- end }}
+{{- end }}
+
+---
+
+{{ if  .Values.gateway.redirectRoute.enabled }}
+{{- $fullname := (include "trino.fullname" .) }}
+{{- $coordinatorName := (include "trino.coordinator" .) }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -77,50 +120,11 @@ spec:
     {{- tpl (toYaml .) . | nindent 4 }}
   {{- end }}
   rules:
-  - filters:
-    - type: RequestRedirect
-      requestRedirect:
-        scheme: https
-        statusCode: 301
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
 {{- end }}
+{{- end -}}
 
----
-
-{{- if  .Values.gateway.backendTLSPolicy.enabled -}}
-apiVersion: gateway.networking.k8s.io/v1
-kind: BackendTLSPolicy
-metadata:
-  name: {{ $coordinatorName }}
-  namespace: {{ .Release.Namespace }}
-  labels:
-    tier: trino
-    component: trino-httproute
-    release: {{ .Release.Name }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    heritage: {{ .Release.Service }}
-    {{- include "trino.labels" . | nindent 4 }}
-  {{- with .Values.gateway.annotations }}
-  annotations: {{- toYaml . | nindent 4 }}
-  {{- end }}
-spec:
-  targetRefs:
-  - group: gateway.networking.k8s.io/v1
-    kind: Service
-    name: {{ $fullname }}
-  validation:
-    {{- if  .Values.gateway.backendTLSPolicy.hostname }}
-    hostname: {{ tpl .Values.gateway.backendTLSPolicy.hostname . | quote }}
-    {{- end }}
-    {{- if  .Values.gateway.backendTLSPolicy.subjectAltNames}}
-    subjectAltNames:
-    {{- toYaml .Values.gateway.backendTLSPolicy.subjectAltNames | nindent 6 }}
-    {{- end }}
-    {{- if  .Values.gateway.backendTLSPolicy.caCertificateRefs }}
-    caCertificateRefs:
-    {{- toYaml .Values.gateway.backendTLSPolicy.caCertificateRefs | nindent 6 }}
-    {{- end }}
-    {{- if  .Values.gateway.backendTLSPolicy.wellKnownCACertificates }}
-    wellKnownCACertificates: {{tpl .Values.gateway.backendTLSPolicy.wellKnownCACertificates . | quote}}
-    {{- end }}
-{{- end }}
-{{- end }}

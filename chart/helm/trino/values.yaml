@@ -1321,7 +1321,16 @@ gateway:
   #            - name: X-Forwarded-Proto
   #              value: https
   # ```
-
+  redirectRoute:
+    enabled: false
+    parentRefs: []
+  backendTLSPolicy:
+      enabled: false
+      hostname: ''
+      caCertificateRefs: []
+      wellKnownCACertificates: ""
+      subjectAltNames: []  
+    
 networkPolicy:
   # networkPolicy.enabled -- Set to true to enable Trino pod protection with a
   # [NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/).
