@@ -53,7 +53,7 @@ spec:
 {{- if  .Values.gateway.backendTLSPolicy.enabled }}
 {{- $fullname := (include "trino.fullname" .) }}
 {{- $coordinatorName := (include "trino.coordinator" .) }}
-apiVersion: gateway.networking.k8s.io/v1
+apiVersion: ""
 kind: BackendTLSPolicy
 metadata:
   name: {{ $coordinatorName }}
