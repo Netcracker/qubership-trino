@@ -675,7 +675,9 @@ Following configuration parameters are available:
 |gateway.backendTLSPolicy.wellKnownCACertificates|`string`|`""`|wellKnownCACertificates for backendTLSPolicy|
 |gateway.backendTLSPolicy.subjectAltNames|`array`|`[]`|subjectAltNames for backendTLSPolicy|
 
-Configuration example can be found below:
+Configuration examples can be found below:
+
+Non tls:
 ```yaml
   gateway:
     enabled: true
@@ -688,6 +690,35 @@ Configuration example can be found below:
       - trino-gateway.your.k8s.hostname
     rules:
       - path: {}
+```
+
+with TLS:
+```yaml
+gateway:
+  enabled: true
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: tls-envoy-gateway
+      namespace: envoy-api-gateway
+  hostnames:
+    - trino.tls-gateway.your.k8s.hostname
+  rules:
+    - path:
+        type: PathPrefix
+        value: /
+      backendRefs:
+        - name: trino
+          port: 8443
+  backendTLSPolicy:
+    enabled: true
+    caCertificateRefs:
+      - group: ""
+        kind: Secret
+        name: trino-server-tls-cert
+    hostname: trino.trino.svc.cluster.local
+    wellKnownCACertificates: ""
+    subjectAltNames: []
 ```
 
 # Installation
