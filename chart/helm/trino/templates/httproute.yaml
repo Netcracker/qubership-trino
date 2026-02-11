@@ -21,7 +21,12 @@ metadata:
 spec:
   {{- with .Values.gateway.parentRefs }}
   parentRefs:
-    {{- tpl (toYaml .) $Global | nindent 4 }}
+    {{- range . }}
+    - name: {{ .name }}
+      namespace: {{ .namespace }}
+      group: {{ .group | default "gateway.networking.k8s.io" }}
+      kind: {{ .kind | default "Gateway" }}
+    {{- end }}
   {{- end }}
   {{- with .Values.gateway.hostnames }}
   hostnames:
@@ -42,11 +47,13 @@ spec:
         {{- toYaml .filters | nindent 8 }}
       {{- end }}
       backendRefs:
+        {{- range .backendRefs }}
         - name: {{ $fullname }}
           port: {{ if $.Values.server.config.https.enabled }}{{ $.Values.server.config.https.port }}{{ else }}{{ $.Values.service.port }}{{ end }}
-          {{- if .weight }}
-          weight: {{ .weight }}
-          {{- end }}
+          group: {{ .group | default "" | quote }}
+          kind: {{ .kind | default "Service" }}
+          weight: {{ .weight | default 1 }}
+        {{- end }}
     {{- end }}
 
 ---
