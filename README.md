@@ -468,8 +468,8 @@ spec:
 ---
 extrasecrets.yaml, secret-tls.yaml, tls-certificate.yaml, tls-issuer.yaml these files are added to provide complete TLS support and enable integration with cert-manager for secure HTTPS communication.
 
-In httproute.yaml the BackendTLSPolicy for TLS communication between the gateway and the Trino coordinator.
-Custom HTTPRoute for redirecting HTTP traffic to HTTPS if TLS is enabled on the gateway.
+In httproute.yaml, the `BackendTLSPolicy` is for TLS communication between the gateway and the Trino coordinator.
+Custom HTTPRoute is for redirecting HTTP traffic to HTTPS, if TLS is enabled on the gateway.
 
 secret-catalog.yaml: 
 Used to securely store Trino catalog configurations (like DB connection properties) using Kubernetes Secrets instead of ConfigMaps.
