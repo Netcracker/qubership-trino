@@ -1,6 +1,7 @@
 {{- if  .Values.gateway.enabled -}}
 {{- $fullname := (include "trino.fullname" .) }}
 {{- $coordinatorName := (include "trino.coordinator" .) }}
+#--Qubership custom change---
 {{- $Global := . }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -21,12 +22,7 @@ metadata:
 spec:
   {{- with .Values.gateway.parentRefs }}
   parentRefs:
-    {{- range . }}
-    - name: {{ .name }}
-      namespace: {{ .namespace }}
-      group: {{ .group | default "gateway.networking.k8s.io" }}
-      kind: {{ .kind | default "Gateway" }}
-    {{- end }}
+    {{- tpl (toYaml .) $Global | nindent 4 }}
   {{- end }}
   {{- with .Values.gateway.hostnames }}
   hostnames:
@@ -47,17 +43,23 @@ spec:
         {{- toYaml .filters | nindent 8 }}
       {{- end }}
       backendRefs:
-        {{- range .backendRefs }}
-        - name: {{ $fullname }}
+      #--Qubership custom change---
+        - group: ''
+          kind: Service
+          name: {{ $fullname }}
           port: {{ if $.Values.server.config.https.enabled }}{{ $.Values.server.config.https.port }}{{ else }}{{ $.Values.service.port }}{{ end }}
-          group: {{ .group | default "" | quote }}
-          kind: {{ .kind | default "Service" }}
-          weight: {{ .weight | default 1 }}
-        {{- end }}
+          {{- if .weight }}
+          weight: {{ .weight }}
+      #--Qubership custom change---    
+          {{- else }}
+          weight: 1
+          {{- end }}
     {{- end }}
 
 ---
-
+#################################################
+## Qubership custom template. BackendTLSPolicy for TLS communication between the gateway and the Trino coordinator.
+#################################################
 {{- if  .Values.gateway.backendTLSPolicy.enabled -}}
 {{- $fullname := (include "trino.fullname" .) }}
 {{- $coordinatorName := (include "trino.coordinator" .) }}
@@ -99,7 +101,9 @@ spec:
 {{- end }}
 
 ---
-
+#################################################
+## Qubership custom template. HTTPRoute for redirecting HTTP traffic to HTTPS if TLS is enabled on the gateway.
+#################################################
 {{ if  .Values.gateway.redirectRoute.enabled -}}
 {{- $fullname := (include "trino.fullname" .) }}
 {{- $coordinatorName := (include "trino.coordinator" .) }}
