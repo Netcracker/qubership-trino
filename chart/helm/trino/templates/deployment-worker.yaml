@@ -194,28 +194,28 @@ spec:
             - name: {{ .name }}
               mountPath: {{ .path }}
               {{- if .subPath }}
-              subPath: { { .subPath }}
+              subPath: {{ .subPath }}
               {{- end }}
             {{- end }}
             {{- range .Values.worker.configMounts }}
             - name: {{ .name }}
               mountPath: {{ .path }}
               {{- if .subPath }}
-              subPath: { { .subPath }}
+              subPath: {{ .subPath }}
               {{- end }}
             {{- end }}
             {{- range .Values.secretMounts }}
             - name: {{ .name }}
               mountPath: {{ .path }}
               {{- if .subPath }}
-              subPath: { { .subPath }}
+              subPath: {{ .subPath }}
               {{- end }}
             {{- end }}
             {{- range .Values.worker.secretMounts }}
             - name: {{ .name }}
               mountPath: {{ .path }}
               {{- if .subPath }}
-              subPath: { { .subPath }}
+              subPath: {{ .subPath }}
               {{- end }}
             {{- end }}
             {{- with .Values.worker.additionalVolumeMounts }}

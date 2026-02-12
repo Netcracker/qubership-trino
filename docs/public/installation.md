@@ -20,6 +20,7 @@ The following topics are covered in this chapter:
       * [Configure Trino Connectors To Use TLS/SSL](#configure-trino-connectors-to-use-tlsssl)
         * [PostgreSQL](#postgresql)
         * [Hive Metastore](#hive-metastore)
+  * [HTTPRoute for K8S Gateway API Support](#httproute-for-k8s-gateway-api-support)      
 * [Installation](#installation)
     * [On-Prem](#on-prem)
         * [Manual Deployment](#manual-deployment) 
@@ -682,6 +683,78 @@ worker:
 ```
 
 There is no option to ignore the certificate validation for Hive Metastore.
+
+## HTTPRoute for K8S Gateway API Support
+
+Qubership platform provides an option to deploy HTTPRoute to expose trino server using K8S gateway API as an alternative to ingress. For more information about k8s Gateway API and HTTPRoute, please refer to the _Official Kubernetes Documentation_ at https://gateway-api.sigs.k8s.io/ and https://gateway-api.sigs.k8s.io/guides/http-routing/.
+
+It is possible to deploy the following three objects: 
+* Main HTTPRoute - It is required to replicate the main ingress logic.
+* Redirect HTTPRoute - It can be used for redirecting trino user interface client from HTTP to HTTPS when using gateway with custom certificate.
+* BackendTLSPolicy - It is required for verifying trino certificate, when TLS is enabled on trino server inside K8S.
+
+Following configuration parameters are available:
+
+|Name|Type|Default|Description|
+|---|---|---|---|
+|gateway.enabled|`boolean`|`false`|Specifies if HTTPRoute for trino server is deployed|
+|gateway.annotations|`object`|`{}`|Annotations for HTTPRoute and related objects|
+|gateway.parentRefs|`array`|`[]`|parentRefs for HTTPRoute|
+|gateway.hostnames|`array`|`[]`|hostnames for HTTPRoute|
+|gateway.rules|`array`|`[]`|rules for HTTPRoute. When `rules[].matches` is not set, it defaults to `path.type=PathPrefix` and `path.value=/`. `backendRefs` in the rule will point to trino server service, but the weight can be configured if needed.|
+|gateway.redirectRoute.enabled|`boolean`|`false`|Specifies if redirect HTTPRoute for trino server is deployed|
+|gateway.redirectRoute.parentRefs|`array`|`[]`|parentRefs for redirect HTTPRoute|
+|gateway.backendTLSPolicy.enabled|`boolean`|`false`|Specifies if the backendTLSPolicy should be deployed|
+|gateway.backendTLSPolicy.hostname|`string`|`''`|Hostname for backendTLSPolicy|
+|gateway.backendTLSPolicy.caCertificateRefs|`array`|`[]`|caCertificateRefs for backendTLSPolicy|
+|gateway.backendTLSPolicy.wellKnownCACertificates|`string`|`""`|wellKnownCACertificates for backendTLSPolicy|
+|gateway.backendTLSPolicy.subjectAltNames|`array`|`[]`|subjectAltNames for backendTLSPolicy|
+
+Configuration examples can be found below:
+
+Non tls:
+```yaml
+  gateway:
+    enabled: true
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: default-external-gateway
+        namespace: envoy-api-gateway
+    hostnames:
+      - trino-gateway.your.k8s.hostname
+    rules:
+      - path: {}
+```
+
+with TLS:
+```yaml
+gateway:
+  enabled: true
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: tls-envoy-gateway
+      namespace: envoy-api-gateway
+  hostnames:
+    - trino.tls-gateway.your.k8s.hostname
+  rules:
+    - path:
+        type: PathPrefix
+        value: /
+      backendRefs:
+        - name: trino
+          port: 8443
+  backendTLSPolicy:
+    enabled: true
+    caCertificateRefs:
+      - group: ""
+        kind: Secret
+        name: trino-server-tls-cert
+    hostname: trino.trino.svc.cluster.local
+    wellKnownCACertificates: ""
+    subjectAltNames: []
+```
 
 # Installation
 
