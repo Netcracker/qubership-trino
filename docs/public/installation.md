@@ -711,7 +711,7 @@ Following configuration parameters are available:
 |gateway.backendTLSPolicy.wellKnownCACertificates|`string`|`""`|wellKnownCACertificates for backendTLSPolicy|
 |gateway.backendTLSPolicy.subjectAltNames|`array`|`[]`|subjectAltNames for backendTLSPolicy|
 
-Configuration examples can be found below:
+The configuration examples are provided below:
 
 Non tls:
 ```yaml
@@ -757,10 +757,11 @@ gateway:
     subjectAltNames: []
 ```
  ## Redirection of Internal Filesystem Stored Logs to stdout
- Trino has been configured to redirect all logs, that were previously stored in the internal filesystem (e.g., /data/trino/var/log) directly to stdout. This ensures all logs are captured by the container runtime without writing to the local disk.
+ 
+Trino has been configured to redirect all logs, that were previously stored in the internal filesystem, for example, `/data/trino/var/log`,  directly to stdout. This ensures that all logs are captured by the container runtime without writing to the local disk.
  |Configuration Key |	Value |	Purpose |
  |:-----------------:|:-------:|:----------:|
- | `TRINO_LAUNCHER_LOG_FILE` | `/dev/stdout` | Redirects startup and process management logs to the console |
+ | `TRINO_LAUNCHER_LOG_FILE` | `/dev/stdout` | Redirects startup and process management logs to the console. |
  | `http-server.log.enabled` | `false` | Disables the creation and rotation of http-request.log files on the internal filesystem. |
  | `http-server.log.console.enabled` | `true` | Activates the console-based logging stream for all HTTP traffic and query events. |
 
@@ -773,8 +774,6 @@ gateway:
    - http-server.log.enabled=false
    - http-server.log.console.enabled=true  
  ```
-
-
 # Installation
 
 The installation process is specified below.
