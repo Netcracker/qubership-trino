@@ -34,7 +34,11 @@ image:
 additionalNodeProperties:
 # Qubership custom change: support Read only filesystem and logging to stdout
   - http-server.log.enabled=false
-  - http-server.log.console.enabled=true       
+  - http-server.log.console.enabled=true    
+ingress:
+  annotations:
+# Qbuership custom change: migration to Gateway API, ignore ingress resources  
+    gateway-api-converter.netcracker.com/ignore: "true"     
 server:
   node:
   config:
