@@ -167,7 +167,7 @@ The following volumes are already provisioned in the deployment to handle standa
  | Volume Name | Mount Path | Sub Path | Purpose | 
  |:-------------:|:---------:|:------------:|:-------------:|
  | common-space | /tmp | tmp-data | Provides a writable area for temporary files, logs, and general OS-level buffers. |
- | common-space | /data/trino | trino-var | Stores the PID file (launcher.pid), and internal logs. |
+ | common-space | /data/trino | trino-var | Stores the PID file (launcher.pid). |
  | java-cacerts-dir| /java-security | java-security | Used specifically for managing Java truststores and security certificates at runtime. |
 
 
