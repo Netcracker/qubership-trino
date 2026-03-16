@@ -757,7 +757,7 @@ gateway:
     subjectAltNames: []
 ```
  ## Redirection of Internal Filesystem Stored Logs to stdout
- Trino has been updated to redirect all logs, that were previously stored in the internal filesystem (e.g., /data/trino/var/log) directly to stdout. This ensures all logs are captured by the container runtime without writing to the local disk.
+ Trino has been configured to redirect all logs, that were previously stored in the internal filesystem (e.g., /data/trino/var/log) directly to stdout. This ensures all logs are captured by the container runtime without writing to the local disk.
  |Configuration Key |	Value |	Purpose |
  |:-----------------:|:-------:|:----------:|
  | `TRINO_LAUNCHER_LOG_FILE` | `/dev/stdout` | Redirects startup and process management logs to the console |
