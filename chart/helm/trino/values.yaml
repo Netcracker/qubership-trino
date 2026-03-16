@@ -332,7 +332,9 @@ resourceGroups: {}
 #      }
 # ```
 
-additionalNodeProperties: []
+additionalNodeProperties:
+  - http-server.log.enabled=false
+  - http-server.log.console.enabled=true
 # additionalNodeProperties -- [Additional node
 # properties](https://trino.io/docs/current/installation/deployment.html#log-levels).
 # @raw
@@ -488,10 +490,7 @@ additionalCatalogs: {}
 # additionalCatalogs -- Deprecated, use `catalogs` instead. Configure additional
 # [catalogs](https://trino.io/docs/current/installation/deployment.html#catalog-properties).
 
-env:
-# Qubership custom change: support Read only filesystem 
-  - name: TRINO_HISTORY_FILE
-    value: "/tmp/.trino_history"
+env: []
 # env -- additional environment variables added to every pod, specified as a list with explicit values
 # @raw
 # Example:

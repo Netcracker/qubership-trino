@@ -148,6 +148,10 @@ spec:
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           env:
+            - name: TRINO_LAUNCHER_LOG_FILE
+              value: /dev/stdout
+            - name: TRINO_HISTORY_FILE
+              value: "/tmp/.trino_history"
             {{- toYaml .Values.env | nindent 12 }}
           envFrom:
             {{- tpl (toYaml .Values.envFrom) . | nindent 12 }}
