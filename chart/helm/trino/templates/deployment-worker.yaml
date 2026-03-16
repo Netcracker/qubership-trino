@@ -148,7 +148,7 @@ spec:
           securityContext:
             {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           env:
-          # Qubership custom change: support Read only filesystem
+          # Qubership custom change: support Read only filesystem and logging to stdout
             - name: TRINO_LAUNCHER_LOG_FILE
               value: /dev/stdout
             - name: TRINO_HISTORY_FILE

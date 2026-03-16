@@ -31,10 +31,10 @@ CUSTOM CHANGES: The following parameters have been added or modified to support 
 image:
     repository: ghcr.io/netcracker/qubership-trino
     tag: main
-env:
-# Qubership custom change: support Read only filesystem 
-  - name: TRINO_HISTORY_FILE
-    value: "/tmp/.trino_history"    
+additionalNodeProperties:
+# Qubership custom change: support Read only filesystem and logging to stdout
+  - http-server.log.enabled=false
+  - http-server.log.console.enabled=true       
 server:
   node:
   config:
@@ -277,7 +277,13 @@ spec:
         {{- end }}
         containers:
             - name: {{ .Chart.Name }}-coordinator
-            volumeMounts:
+              env:
+          # Qubership custom change: support Read only filesystem and logging to stdout
+                - name: TRINO_LAUNCHER_LOG_FILE
+                  value: /dev/stdout
+                - name: TRINO_HISTORY_FILE
+                  value: "/tmp/.trino_history"
+              volumeMounts:
                 {{- if and .Values.server.config.https.enabled .Values.tls.enabled }}
             {{- if not .Values.tls.generateCerts.enabled }}
             - mountPath: {{ .Values.tls.secretMounts.path }}
@@ -359,6 +365,12 @@ spec:
         {{- end}}
        containers:
         - name: {{ .Chart.Name }}-worker
+          env:
+          # Qubership custom change: support Read only filesystem and logging to stdout
+            - name: TRINO_LAUNCHER_LOG_FILE
+              value: /dev/stdout
+            - name: TRINO_HISTORY_FILE
+              value: "/tmp/.trino_history"
           volumeMounts:
           # Qubership custom change: support Read only filesystem
             - name: common-space

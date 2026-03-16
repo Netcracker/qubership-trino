@@ -333,6 +333,7 @@ resourceGroups: {}
 # ```
 
 additionalNodeProperties:
+# Qubership custom change: support Read only filesystem and logging to stdout
   - http-server.log.enabled=false
   - http-server.log.console.enabled=true
 # additionalNodeProperties -- [Additional node

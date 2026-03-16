@@ -20,7 +20,8 @@ The following topics are covered in this chapter:
       * [Configure Trino Connectors To Use TLS/SSL](#configure-trino-connectors-to-use-tlsssl)
         * [PostgreSQL](#postgresql)
         * [Hive Metastore](#hive-metastore)
-  * [HTTPRoute for K8S Gateway API Support](#httproute-for-k8s-gateway-api-support)      
+  * [HTTPRoute for K8S Gateway API Support](#httproute-for-k8s-gateway-api-support)
+  * [Redirection of Internal Filesystem Stored Logs to stdout](#redirection-of-internal-filesystem-stored-logs-to-stdout)      
 * [Installation](#installation)
     * [On-Prem](#on-prem)
         * [Manual Deployment](#manual-deployment) 
@@ -755,6 +756,24 @@ gateway:
     wellKnownCACertificates: ""
     subjectAltNames: []
 ```
+ ## Redirection of Internal Filesystem Stored Logs to stdout
+ Trino has been updated to redirect all logs, that were previously stored in the internal filesystem (e.g., /data/trino/var/log) directly to stdout. This ensures all logs are captured by the container runtime without writing to the local disk.
+ |Configuration Key |	Value |	Purpose |
+ |:-----------------:|:-------:|:----------:|
+ | `TRINO_LAUNCHER_LOG_FILE` | `/dev/stdout` | Redirects startup and process management logs to the console |
+ | `http-server.log.enabled` | `false` | Disables the creation and rotation of http-request.log files on the internal filesystem. |
+ | `http-server.log.console.enabled` | `true` | Activates the console-based logging stream for all HTTP traffic and query events. |
+
+ The above values are configured as defaults as follows:
+ ```yaml
+ env:
+   - name: TRINO_LAUNCHER_LOG_FILE
+     value: /dev/stdout
+ additionalNodeProperties:
+   - http-server.log.enabled=false
+   - http-server.log.console.enabled=true  
+ ```
+
 
 # Installation
 
