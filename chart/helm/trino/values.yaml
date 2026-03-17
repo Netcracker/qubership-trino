@@ -332,7 +332,10 @@ resourceGroups: {}
 #      }
 # ```
 
-additionalNodeProperties: []
+additionalNodeProperties:
+# Qubership custom change: support Read only filesystem and logging to stdout
+  - http-server.log.enabled=false
+  - http-server.log.console.enabled=true
 # additionalNodeProperties -- [Additional node
 # properties](https://trino.io/docs/current/installation/deployment.html#log-levels).
 # @raw
@@ -488,10 +491,7 @@ additionalCatalogs: {}
 # additionalCatalogs -- Deprecated, use `catalogs` instead. Configure additional
 # [catalogs](https://trino.io/docs/current/installation/deployment.html#catalog-properties).
 
-env:
-# Qubership custom change: support Read only filesystem 
-  - name: TRINO_HISTORY_FILE
-    value: "/tmp/.trino_history"
+env: []
 # env -- additional environment variables added to every pod, specified as a list with explicit values
 # @raw
 # Example:
@@ -1234,7 +1234,9 @@ commonLabels:
 ingress:
   enabled: false
   className: ""
-  annotations: {}
+  annotations:
+  # Qbuership custom change: migration to Gateway API, ignore ingress resources
+    gateway-api-converter.netcracker.com/ignore: "true"
   #    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
   #    nginx.ingress.kubernetes.io/proxy-ssl-verify: 'on'
   #    nginx.ingress.kubernetes.io/proxy-ssl-name: 'trino.<hue_namespace>'
