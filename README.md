@@ -528,3 +528,4 @@ Used to securely store Trino catalog configurations (like DB connection properti
 It has replaced the community `configmap-catalog.yaml`.
 
 ---
+testcla
