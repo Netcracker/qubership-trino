@@ -56,10 +56,8 @@ spec:
       priorityClassName: {{ .Values.coordinator.priorityClassName }}
       {{- end }}
       serviceAccountName: {{ include "trino.serviceAccountName" . }}
-      {{- with .Values.securityContext }}
       securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- include "trino.pod.sc" . | nindent 8 }}
       {{- if .Values.shareProcessNamespace.coordinator }}
       shareProcessNamespace: {{ .Values.shareProcessNamespace.coordinator }}
       {{- end }}
@@ -161,7 +159,7 @@ spec:
           image: {{ include "trino_image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
-            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+            {{- include "trino.csc" . | nindent 12 }}
           env:
           # Qubership custom change: support Read only filesystem and logging to stdout
             - name: TRINO_LAUNCHER_LOG_FILE
@@ -303,7 +301,7 @@ spec:
           image: {{ $coordinatorJmx.exporter.image }}
           imagePullPolicy: {{ $coordinatorJmx.exporter.pullPolicy }}
           securityContext:
-            {{- toYaml $coordinatorJmx.exporter.securityContext | nindent 12 }}
+            {{- include "jmx.csc" . | nindent 12 }}
           args:
             - "{{ $coordinatorJmx.exporter.port }}"
             - /etc/jmx-exporter/jmx-exporter-config.yaml
