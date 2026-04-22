@@ -255,6 +255,19 @@ accessControl: {}
 #      }
 # ```
 
+headerAuthenticator: {}
+# headerAuthenticator -- [Header authenticator](https://trino.io/docs/current/develop/header-authenticator.html)
+# configuration. Required when `server.config.authenticationType` contains `HEADER`.
+# @raw
+# Provide the plugin configuration properties. The `header-authenticator.name` value must
+# match the name of the installed authenticator plugin.
+# ```yaml
+# headerAuthenticator:
+#   properties: |
+#     header-authenticator.name=my-header-authenticator
+#     header-authenticator.username-header=X-Authenticated-User
+# ```
+
 resourceGroups: {}
 # resourceGroups -- [Resource groups control](https://trino.io/docs/current/admin/resource-groups.html)
 # @raw

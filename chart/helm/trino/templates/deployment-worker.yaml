@@ -235,17 +235,17 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+            {{- if .Values.server.config.https.enabled }}
+            - name: https
+              containerPort: {{ .Values.server.config.https.port }}
+              protocol: TCP
+            {{- end }}
             {{- if $workerJmx.enabled }}
             - name: jmx-registry
               containerPort: {{ $workerJmx.registryPort }}
               protocol: TCP
             - name: jmx-server
               containerPort: {{ $workerJmx.serverPort }}
-              protocol: TCP
-            {{- end }}
-            {{- if .Values.server.config.https.enabled }}
-            - name: https
-              containerPort: {{ .Values.server.config.https.port }}
               protocol: TCP
             {{- end }}
             {{- range $key, $value := .Values.worker.additionalExposedPorts }}

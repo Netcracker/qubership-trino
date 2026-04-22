@@ -40,6 +40,7 @@ The following table lists the configurable parameters of the Trino chart and the
 | `additionalLogProperties` |  | `{}`                                              |
 | `additionalExchangeManagerProperties` |  | `{}`                                              |
 | `eventListenerProperties` |  | `{}`                                              |
+| `headerAuthenticator` | | `{}` |
 | `catalogs` |  | `{"tpcds":"connector.name=tpcds\ntpcds.splits-per-node=4\n","tpch":"connector.name=tpch\ntpch.splits-per-node=4\n"}`                                              |
 | `additionalCatalogs` | Deprecated | `{}`                                              |
 | `env` |  | `[]`                                              |
