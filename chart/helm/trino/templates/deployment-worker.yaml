@@ -58,10 +58,13 @@ spec:
       priorityClassName: {{ .Values.worker.priorityClassName }}
       {{- end }}
       serviceAccountName: {{ include "trino.serviceAccountName" . }}
-      {{- with .Values.securityContext }}
+      # Qubership customchanges: support for OPENSHIFT
       securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- if eq (default "KUBERNETES" .Values.PAAS_PLATFORM) "OPENSHIFT" }}
+        {{ toYaml (omit .Values.securityContext "runAsUser" "fsGroup" "runAsGroup") | nindent 8 }}
+        {{- else }}
+        {{- toYaml .Values.securityContext | nindent 8 }}
+        {{- end }}
       {{- if .Values.shareProcessNamespace.worker }}
       shareProcessNamespace: {{ .Values.shareProcessNamespace.worker }}
       {{- end }}

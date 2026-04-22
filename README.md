@@ -260,6 +260,13 @@ spec:
       {{- if .Values.coordinator.priorityClassName }}
       priorityClassName: {{ .Values.coordinator.priorityClassName }}
       {{- end }}
+       # Qubership customchanges: support for OPENSHIFT
+      securityContext:
+        {{- if eq (default "KUBERNETES" .Values.PAAS_PLATFORM) "OPENSHIFT" }}
+        {{ toYaml (omit .Values.securityContext "runAsUser" "fsGroup" "runAsGroup") | nindent 8 }}
+        {{- else }}
+        {{- toYaml .Values.securityContext | nindent 8 }}
+        {{- end }}
       volumes:
 # Qubership custom change: support Read only filesystem
         - name: common-space     
@@ -348,6 +355,13 @@ spec:
       {{- if .Values.worker.priorityClassName }}
       priorityClassName: {{ .Values.worker.priorityClassName }}
       {{- end }}
+       # Qubership customchanges: support for OPENSHIFT
+      securityContext:
+        {{- if eq (default "KUBERNETES" .Values.PAAS_PLATFORM) "OPENSHIFT" }}
+        {{ toYaml (omit .Values.securityContext "runAsUser" "fsGroup" "runAsGroup") | nindent 8 }}
+        {{- else }}
+        {{- toYaml .Values.securityContext | nindent 8 }}
+        {{- end }}
       volumes:
       # Qubership custom change: support Read only filesystem
         - name: common-space     
