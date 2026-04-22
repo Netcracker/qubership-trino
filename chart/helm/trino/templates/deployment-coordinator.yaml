@@ -58,7 +58,11 @@ spec:
       serviceAccountName: {{ include "trino.serviceAccountName" . }}
       # Qubership customchanges: support for OPENSHIFT
       securityContext:
-        {{- include "trino.pod.sc" . | nindent 8 }}
+        {{- if eq (default "KUBERNETES" .Values.PAAS_PLATFORM) "OPENSHIFT" }}
+        {{ toYaml (omit .Values.securityContext "runAsUser" "fsGroup" "runAsGroup") | nindent 8 }}
+        {{- else }}
+        {{- toYaml .Values.securityContext | nindent 8 }}
+        {{- end }}
       {{- if .Values.shareProcessNamespace.coordinator }}
       shareProcessNamespace: {{ .Values.shareProcessNamespace.coordinator }}
       {{- end }}
@@ -159,9 +163,8 @@ spec:
         - name: {{ .Chart.Name }}-coordinator
           image: {{ include "trino_image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          # Qubership customchanges: support for OPENSHIFT
           securityContext:
-            {{- include "trino.csc" . | nindent 12 }}
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
           env:
           # Qubership custom change: support Read only filesystem and logging to stdout
             - name: TRINO_LAUNCHER_LOG_FILE
@@ -302,9 +305,8 @@ spec:
         - name: jmx-exporter
           image: {{ $coordinatorJmx.exporter.image }}
           imagePullPolicy: {{ $coordinatorJmx.exporter.pullPolicy }}
-          # Qubership customchanges: support for OPENSHIFT
           securityContext:
-            {{- include "jmx.csc" . | nindent 12 }}
+            {{- toYaml $coordinatorJmx.exporter.securityContext | nindent 12 }}
           args:
             - "{{ $coordinatorJmx.exporter.port }}"
             - /etc/jmx-exporter/jmx-exporter-config.yaml
