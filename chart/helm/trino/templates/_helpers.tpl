@@ -210,6 +210,7 @@ Hive Metastore URI
 {{ printf "thrift://%s:%v" (.Values.hive.host) (.Values.hive.port) }} 
 {{- end -}}
 
+# Qubership customchanges: support for OPENSHIFT
 {{/*
 Custom POD sc for trino
 */}}

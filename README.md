@@ -238,6 +238,60 @@ Processed by cert-manager label for Qubership release
 {{- define "cert_manager_label" -}}
 app.kubernetes.io/processed-by-operator: cert-manager
 {{- end }}
+
+
+{{/*
+Custom POD sc for trino
+*/}}
+{{- define "trino.pod.sc" -}}
+{{- if eq (default "KUBERNETES" .Values.PAAS_PLATFORM) "OPENSHIFT" -}}
+runAsUser: ~
+runAsGroup: ~
+fsGroup: ~
+{{- $context := omit .Values.securityContext "runAsUser" "fsGroup" "runAsGroup" -}}
+{{- if not (empty $context) -}}
+{{ toYaml $context }}
+{{- end }}
+{{- else }}
+{{- with .Values.securityContext }}
+{{- toYaml . }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Custom csc for trino
+*/}}
+{{- define "trino.csc" -}}
+{{- if eq (default "KUBERNETES" .Values.PAAS_PLATFORM) "OPENSHIFT" -}}
+{{- $context := omit .Values.containerSecurityContext "runAsUser" -}}
+{{- if not (empty $context) -}}
+{{ toYaml $context }}
+runAsUser: ~
+{{- end }}
+{{- else }}
+{{- with .Values.containerSecurityContext }}
+{{- toYaml . }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+JMX exporter sc
+*/}}
+{{- define "jmx.csc" -}}
+{{- if eq (default "KUBERNETES" .Values.PAAS_PLATFORM) "OPENSHIFT" -}}
+{{- $context := omit .Values.jmx.exporter.securityContext "runAsUser" -}}
+{{- if not (empty $context) -}}
+{{ toYaml $context }}
+runAsUser: ~
+{{- end }}
+{{- else }}
+{{- with .Values.jmx.exporter.securityContext }}
+{{- toYaml . }}
+{{- end }}
+{{- end }}
+{{- end -}}
 ```
 ---
 
@@ -260,6 +314,9 @@ spec:
       {{- if .Values.coordinator.priorityClassName }}
       priorityClassName: {{ .Values.coordinator.priorityClassName }}
       {{- end }}
+       # Qubership customchanges: support for OPENSHIFT
+      securityContext:
+        {{- include "trino.pod.sc" . | nindent 8 }}
       volumes:
 # Qubership custom change: support Read only filesystem
         - name: common-space     
@@ -281,6 +338,9 @@ spec:
         {{- end }}
         containers:
             - name: {{ .Chart.Name }}-coordinator
+              # Qubership customchanges: support for OPENSHIFT
+              securityContext:
+                {{- include "trino.csc" . | nindent 12 }}
               env:
           # Qubership custom change: support Read only filesystem and logging to stdout
                 - name: TRINO_LAUNCHER_LOG_FILE
@@ -321,6 +381,13 @@ spec:
               containerPort: {{ .Values.server.config.https.port }}
               protocol: TCP
             {{- end }}
+        {{- if $coordinatorJmx.exporter.enabled }}
+            - name: jmx-exporter
+              image: {{ $coordinatorJmx.exporter.image }}
+              imagePullPolicy: {{ $coordinatorJmx.exporter.pullPolicy }}
+            # Qubership customchanges: support for OPENSHIFT
+            securityContext:
+              {{- include "jmx.csc" . | nindent 12 }}
     
 ```
 
@@ -348,6 +415,9 @@ spec:
       {{- if .Values.worker.priorityClassName }}
       priorityClassName: {{ .Values.worker.priorityClassName }}
       {{- end }}
+       # Qubership customchanges: support for OPENSHIFT
+      securityContext:
+        {{- include "trino.pod.sc" . | nindent 8 }}
       volumes:
       # Qubership custom change: support Read only filesystem
         - name: common-space     
@@ -369,6 +439,9 @@ spec:
         {{- end}}
        containers:
         - name: {{ .Chart.Name }}-worker
+          # Qubership customchanges: support for OPENSHIFT
+          securityContext:
+            {{- include "trino.csc" . | nindent 12 }}
           env:
           # Qubership custom change: support Read only filesystem and logging to stdout
             - name: TRINO_LAUNCHER_LOG_FILE
@@ -408,6 +481,13 @@ spec:
             containerPort: {{ .Values.server.config.https.port }}
             protocol: TCP
             {{- end }}
+        {{- if $workerJmx.exporter.enabled }}
+        - name: jmx-exporter
+          image: {{ $workerJmx.exporter.image }}
+          imagePullPolicy: {{ $workerJmx.exporter.pullPolicy }}
+          # Qubership customchanges: support for OPENSHIFT
+          securityContext:
+            {{- include "jmx.csc" . | nindent 12 }}    
 ```
 
 ---

@@ -58,6 +58,7 @@ spec:
       priorityClassName: {{ .Values.worker.priorityClassName }}
       {{- end }}
       serviceAccountName: {{ include "trino.serviceAccountName" . }}
+      # Qubership customchanges: support for OPENSHIFT
       securityContext:
         {{- include "trino.pod.sc" . | nindent 8 }}
       {{- if .Values.shareProcessNamespace.worker }}
@@ -143,6 +144,7 @@ spec:
         - name: {{ .Chart.Name }}-worker
           image: {{ include "trino_image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # Qubership customchanges: support for OPENSHIFT
           securityContext:
             {{- include "trino.csc" . | nindent 12 }}
           env:
@@ -293,6 +295,7 @@ spec:
       - name: jmx-exporter
         image: {{ $workerJmx.exporter.image }}
         imagePullPolicy: {{ $workerJmx.exporter.pullPolicy }}
+        # Qubership customchanges: support for OPENSHIFT
         securityContext:
           {{- include "jmx.csc" . | nindent 12 }}
         args:
