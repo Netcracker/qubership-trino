@@ -6,7 +6,7 @@ RUN apk add --no-cache curl
 RUN mkdir -p /patchedlibs && \
     curl -k -L ${MAVEN_REPO}/org/opensearch/opensearch-common/2.19.4/opensearch-common-2.19.4.jar --output  /patchedlibs/opensearch-common-2.19.4.jar
     
-FROM trinodb/trino:479
+FROM trinodb/trino:480
 
 USER root
 
