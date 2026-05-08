@@ -377,8 +377,9 @@ server:
     internal-communication.shared-secret='trino-password-authentication'
     http-server.process-forwarded=true
   workerExtraConfig: internal-communication.shared-secret='trino-password-authentication'
-auth: |
-  passwordAuth: test: cat password.db
+auth: 
+  passwordAuth: |
+    test: cat password.db
 ```
 
 Example `passwordAuth` for "qwerty123" password:
@@ -668,7 +669,7 @@ To secure connection to Hive Metastore `hive.metastore.thrift.client.*` properti
     hive.metastore.thrift.client.ssl.trust-certificate-password=changeit
 ```
 
-To enable secure connection to S3 storage, `hive.s3.ssl.enabled=true` should be set to true.
+To enable secure connection to S3 storage, `s3.endpoint` must include `https://` prefix.
 
 To ignore certificate validation for S3, the following properties should be added:
 ```yaml
