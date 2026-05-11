@@ -6,7 +6,8 @@ COPY docker-transfer/sync.py /app/sync.py
 COPY chart /app/chart
 COPY docs /app/docs
 
-RUN pip install --no-cache-dir ruamel.yaml && \
+RUN pip install --no-cache-dir ruamel.yaml pyyaml && \
+    python validation.py chart/helm/trino/values.yaml chart/helm/trino/values.schema.json && \
     python sync.py chart/helm/trino/release-images.yaml chart/helm/trino/values.yaml
 
 FROM scratch

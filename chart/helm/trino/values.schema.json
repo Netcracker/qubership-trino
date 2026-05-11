@@ -1,0 +1,1332 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Trino Helm Chart Values",
+  "description": "Schema for validating the Trino Helm chart",
+  "definitions": {
+        "io.k8s.apimachinery.pkg.api.resource.Quantity": {
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "number"
+                }
+            ]
+        },
+        "io.k8s.api.core.v1.ResourceRequirements": {
+            "description": "ResourceRequirements describes the compute resource requirements.",
+            "properties": {
+                "limits": {
+                    "additionalProperties": {
+                        "$ref": "#/definitions/io.k8s.apimachinery.pkg.api.resource.Quantity"
+                    },
+                    "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                    "type": "object"
+                },
+                "requests": {
+                    "additionalProperties": {
+                        "$ref": "#/definitions/io.k8s.apimachinery.pkg.api.resource.Quantity"
+                    },
+                    "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                    "type": "object"
+                }
+            },
+            "type": "object",
+            "additionalProperties": false
+        }
+    },
+  "properties": {
+    "nameOverride": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Override resource names to avoid name conflicts"
+    },
+    "fullnameOverride": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Override the full name of the release"
+    },
+    "coordinatorNameOverride": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Override the coordinator name"
+    },
+    "workerNameOverride": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Override the worker name"
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "registry": {
+          "type": "string",
+          "default": "",
+          "description": "Image registry"
+        },
+        "repository": {
+          "type": "string",
+          "default": "ghcr.io/netcracker/qubership-trino",
+          "description": "Repository location of the Trino image"
+        },
+        "tag": {
+          "type": "string",
+          "default": "main",
+          "description": "Image tag"
+        },
+        "digest": {
+          "type": "string",
+          "default": "",
+          "description": "Optional digest value of the image"
+        },
+        "useRepositoryAsSoleImageReference": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, only use repository as image reference"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "default": "IfNotPresent",
+          "description": "Image pull policy"
+        }
+      }
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "default": [],
+      "description": "Optional list of references to secrets for pulling images"
+    },
+    "server": {
+      "type": "object",
+      "properties": {
+        "workers": {
+          "type": "integer",
+          "default": 2,
+          "description": "Number of worker nodes"
+        },
+        "node": {
+          "type": "object",
+          "properties": {
+            "environment": {
+              "type": "string",
+              "default": "production",
+              "description": "Server node environment"
+            },
+            "dataDir": {
+              "type": "string",
+              "default": "/data/trino",
+              "description": "Data directory path"
+            },
+            "pluginDir": {
+              "type": "string",
+              "default": "/usr/lib/trino/plugin",
+              "description": "Plugin directory path"
+            }
+          },
+          "additionalProperties": true
+        },
+        "log": {
+          "type": "object",
+          "properties": {
+            "trino": {
+              "type": "object",
+              "properties": {
+                "level": {
+                  "type": "string",
+                  "default": "INFO",
+                  "description": "Trino log level"
+                }
+              }
+            }
+          }
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "default": "/etc/trino",
+              "description": "Configuration path"
+            },
+            "http": {
+              "type": "object",
+              "properties": {
+                "port": {
+                  "type": "integer",
+                  "default": 8080,
+                  "description": "HTTP port"
+                }
+              }
+            },
+            "https": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Enable HTTPS"
+                },
+                "port": {
+                  "type": "integer",
+                  "default": 8443,
+                  "description": "HTTPS port"
+                },
+                "keystore": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "default": "/etc/trino/certs/tls-combined.pem",
+                      "description": "Keystore path"
+                    }
+                  }
+                }
+              }
+            },
+            "authenticationType": {
+              "type": "string",
+              "default": "",
+              "description": "Authentication type (PASSWORD, CERTIFICATE, OAUTH2, JWT, KERBEROS)"
+            },
+            "query": {
+              "type": "object",
+              "properties": {
+                "maxMemory": {
+                  "type": "string",
+                  "default": "2GB",
+                  "description": "Maximum query memory"
+                }
+              }
+            }
+          },
+            "additionalProperties": true
+        },
+        "exchangeManager": {
+          "type": "object",
+          "default": {},
+          "description": "Exchange manager configuration for fault-tolerant execution"
+        },
+        "workerExtraConfig": {
+          "type": "string",
+          "default": "",
+          "description": "Extra worker configuration"
+        },
+        "coordinatorExtraConfig": {
+          "type": "string",
+          "description": "Extra coordinator configuration"
+        },
+        "autoscaling": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable horizontal pod autoscaling"
+            },
+            "maxReplicas": {
+              "type": "integer",
+              "default": 5,
+              "description": "Maximum replicas for autoscaling"
+            },
+            "targetCPUUtilizationPercentage": {
+              "type": "integer",
+              "default": 50,
+              "description": "Target CPU utilization percentage"
+            },
+            "targetMemoryUtilizationPercentage": {
+              "type": "integer",
+              "default": 80,
+              "description": "Target memory utilization percentage"
+            },
+            "behavior": {
+              "type": "object",
+              "default": {},
+              "description": "Configuration for scaling up and down"
+            }
+          }
+        },
+        "keda": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable KEDA (Kubernetes Event-driven Autoscaling)"
+            },
+            "pollingInterval": {
+              "type": "integer",
+              "default": 30,
+              "description": "Polling interval in seconds"
+            },
+            "cooldownPeriod": {
+              "type": "integer",
+              "default": 300,
+              "description": "Cooldown period in seconds"
+            },
+            "initialCooldownPeriod": {
+              "type": "integer",
+              "default": 0,
+              "description": "Initial cooldown period in seconds"
+            },
+            "minReplicaCount": {
+              "type": "integer",
+              "default": 0,
+              "description": "Minimum replica count"
+            },
+            "maxReplicaCount": {
+              "type": "integer",
+              "default": 5,
+              "description": "Maximum replica count"
+            },
+            "fallback": {
+              "type": "object",
+              "default": {},
+              "description": "Fallback options if scaler is in error state"
+            },
+            "advanced": {
+              "type": "object",
+              "default": {},
+              "description": "Advanced HPA related options"
+            },
+            "triggers": {
+              "type": "array",
+              "default": [],
+              "description": "List of triggers to activate scaling"
+            },
+            "annotations": {
+              "type": "object",
+              "default": {},
+              "description": "Annotations for the ScaledObject CRD",
+              "additionalProperties": {
+                "type": "string"
+                }
+            }
+          }
+        }
+      }
+    },
+    "accessControl": {
+      "type": "object",
+      "default": {},
+      "description": "System access control configuration"
+    },
+    "headerAuthenticator": {
+      "type": "object",
+      "default": {},
+      "description": "Header authenticator configuration"
+    },
+    "resourceGroups": {
+      "type": "object",
+      "default": {},
+      "description": "Resource groups control configuration"
+    },
+    "additionalNodeProperties": {
+      "type": "array",
+      "default": [
+        "http-server.log.enabled=false",
+        "http-server.log.console.enabled=true"
+      ],
+      "description": "Additional node properties"
+    },
+    "additionalConfigProperties": {
+      "type": "array",
+      "default": [],
+      "description": "Additional config properties"
+    },
+    "additionalLogProperties": {
+      "type": "array",
+      "default": [],
+      "description": "Additional log properties"
+    },
+    "additionalExchangeManagerProperties": {
+      "type": "array",
+      "default": [],
+      "description": "Additional exchange manager properties"
+    },
+    "sessionProperties": {
+      "type": "object",
+      "default": {},
+      "description": "Session properties manager configuration"
+    },
+    "eventListenerProperties": {
+      "type": "array",
+      "default": [],
+      "description": "Event listener properties"
+    },
+    "s3": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "default": "http://minio.your.cloud.qubeship.com",
+          "description": "S3 endpoint"
+        },
+        "accesskey": {
+          "type": "string",
+          "default": "minioaccesskey",
+          "description": "S3 access key"
+        },
+        "secretkey": {
+          "type": "string",
+          "default": "miniosecretkey",
+          "description": "S3 secret key"
+        },
+        "region": {
+          "type": "string",
+          "default": "region",
+          "description": "S3 region"
+        }
+      }
+    },
+    "hive": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "type": "string",
+          "default": "hive-metastore.hive-metastore.svc",
+          "description": "Hive metastore host"
+        },
+        "port": {
+          "type": "integer",
+          "default": 9083,
+          "description": "Hive metastore port"
+        }
+      }
+    },
+    "catalogs": {
+      "type": "object",
+      "default": {
+        "tpch": "connector.name=tpch\ntpch.splits-per-node=4",
+        "tpcds": "connector.name=tpcds\ntpcds.splits-per-node=4",
+        "hive": "connector.name=hive\nhive.metastore.uri={{ include \"hive.metastore.uri\" . }}\nhive.max-partitions-per-scan=1000000\nhive.storage-format=ORC\nhive.non-managed-table-writes-enabled=true\nfs.native-s3.enabled=true\ns3.endpoint={{ include \"s3.endpoint\" . }}\ns3.region={{ .Values.s3.region }}\ns3.aws-access-key={{ include \"s3.accesskey\" . }}\ns3.aws-secret-key={{ include \"s3.secretkey\" . }}\ns3.path-style-access=true\ns3.max-connections=100"
+      },
+      "description": "Catalog configuration"
+    },
+    "additionalCatalogs": {
+      "type": "object",
+      "default": {},
+      "description": "Additional catalogs (deprecated, use catalogs instead)"
+    },
+    "env": {
+      "type": "array",
+      "default": [],
+      "description": "Additional environment variables for all pods"
+    },
+    "envFrom": {
+      "type": "array",
+      "default": [],
+      "description": "Additional environment variables from ConfigMap or Secret"
+    },
+    "initContainers": {
+      "type": "object",
+      "default": {},
+      "description": "Init containers configuration"
+    },
+    "sidecarContainers": {
+      "type": "object",
+      "default": {},
+      "description": "Sidecar containers configuration"
+    },
+    "securityContext": {
+      "type": "object",
+      "properties": {
+        "runAsUser": {
+          "type": "integer",
+          "default": 1000,
+          "description": "User ID to run the container"
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "default": 1000,
+          "description": "Group ID to run the container"
+        }
+      },
+      "additionalProperties": true
+    },
+    "containerSecurityContext": {
+      "type": "object",
+      "properties": {
+        "allowPrivilegeEscalation": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow privilege escalation"
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "drop": {
+              "type": "array",
+              "default": ["ALL"],
+              "description": "Linux kernel capabilities to drop"
+            }
+          }
+        },
+        "runAsNonRoot": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run container as non-root user"
+        },
+        "seccompProfile": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "default": "RuntimeDefault",
+              "description": "Seccomp profile type"
+            }
+          }
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean",
+          "default": true,
+          "description": "Mount root filesystem as read-only"
+        }
+      },
+        "additionalProperties": true
+        
+    },
+    "shareProcessNamespace": {
+      "type": "object",
+      "properties": {
+        "coordinator": {
+          "type": "boolean",
+          "default": false,
+          "description": "Share process namespace for coordinator"
+        },
+        "worker": {
+          "type": "boolean",
+          "default": false,
+          "description": "Share process namespace for worker"
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "default": {},
+          "description": "Service annotations"
+        },
+        "type": {
+          "type": "string",
+          "default": "ClusterIP",
+          "description": "Service type"
+        },
+        "port": {
+          "type": "integer",
+          "default": 8080,
+          "description": "Service port"
+        },
+        "nodePort": {
+          "type": "string",
+          "default": "",
+          "description": "Node port for NodePort service type"
+        }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "default": {},
+      "description": "Authentication configuration"
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "default": false,
+          "description": "Create service account"
+        },
+        "name": {
+          "type": "string",
+          "default": "",
+          "description": "Service account name"
+        },
+        "annotations": {
+          "type": "object",
+          "default": {},
+          "description": "Service account annotations"
+        }
+      }
+    },
+    "configMounts": {
+      "type": "array",
+      "default": [],
+      "description": "Additional config mounts from ConfigMaps"
+    },
+    "secretMounts": {
+      "type": "array",
+      "default": [],
+      "description": "Additional secret mounts"
+    },
+    "coordinator": {
+      "type": "object",
+      "properties": {
+        "priorityClassName": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Priority class name for coordinator"
+        },
+        "deployment": {
+          "type": "object",
+          "properties": {
+            "annotations": {
+              "type": "object",
+              "default": {},
+              "description": "Deployment annotations"
+            },
+            "progressDeadlineSeconds": {
+              "type": "integer",
+              "default": 600,
+              "description": "Progress deadline in seconds"
+            },
+            "revisionHistoryLimit": {
+              "type": "integer",
+              "default": 10,
+              "description": "Number of old ReplicaSets to retain"
+            },
+            "strategy": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "default": "RollingUpdate",
+                  "description": "Deployment strategy type"
+                },
+                "rollingUpdate": {
+                  "type": "object",
+                  "properties": {
+                    "maxSurge": {
+                      "type": "string",
+                      "default": "25%",
+                      "description": "Max surge during rolling update"
+                    },
+                    "maxUnavailable": {
+                      "type": "string",
+                      "default": "25%",
+                      "description": "Max unavailable during rolling update"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "jvm": {
+          "type": "object",
+          "properties": {
+            "maxHeapSize": {
+              "type": "string",
+              "default": "1638M",
+              "description": "JVM max heap size"
+            },
+            "gcMethod": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "default": "UseG1GC",
+                  "description": "Garbage collection method"
+                },
+                "g1": {
+                  "type": "object",
+                  "properties": {
+                    "heapRegionSize": {
+                      "type": "string",
+                      "default": "32M",
+                      "description": "G1 heap region size"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "memory": {
+              "type": "object",
+              "properties": {
+                "heapHeadroomPerNode": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Heap headroom per node"
+                }
+              }
+            },
+            "nodeScheduler": {
+              "type": "object",
+              "properties": {
+                "includeCoordinator": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Include coordinator in scheduling"
+                }
+              }
+            },
+            "query": {
+              "type": "object",
+              "properties": {
+                "maxMemoryPerNode": {
+                  "type": "string",
+                  "default": "1GB",
+                  "description": "Max memory per node for queries"
+                }
+              }
+            }
+          }
+        },
+        "additionalJVMConfig": {
+          "type": "array",
+          "default": [],
+          "description": "Additional JVM configuration"
+        },
+        "additionalExposedPorts": {
+          "type": "object",
+          "default": {},
+          "description": "Additional exposed ports"
+        },
+        "resources": {
+          "$ref": "#/definitions/io.k8s.api.core.v1.ResourceRequirements",
+          "description": "Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+        },
+        "livenessProbe": {
+          "type": "object",
+          "default": {},
+          "description": "Liveness probe configuration"
+        },
+        "readinessProbe": {
+          "type": "object",
+          "default": {},
+          "description": "Readiness probe configuration"
+        },
+        "lifecycle": {
+          "type": "object",
+          "default": {},
+          "description": "Lifecycle events configuration"
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "default": 30,
+          "description": "Termination grace period"
+        },
+        "nodeSelector": {
+          "type": "object",
+          "default": {},
+          "description": "Node selector"
+        },
+        "tolerations": {
+          "type": "array",
+          "default": [],
+          "description": "Pod tolerations"
+        },
+        "affinity": {
+          "type": "object",
+          "default": {},
+          "description": "Pod affinity"
+        },
+        "additionalConfigFiles": {
+          "type": "object",
+          "default": {},
+          "description": "Additional config files"
+        },
+        "additionalVolumes": {
+          "type": "array",
+          "default": [],
+          "description": "Additional volumes"
+        },
+        "additionalVolumeMounts": {
+          "type": "array",
+          "default": [],
+          "description": "Additional volume mounts"
+        },
+        "annotations": {
+          "type": "object",
+          "default": {},
+          "description": "Pod annotations"
+        },
+        "labels": {
+          "type": "object",
+          "default": {},
+          "description": "Pod labels"
+        },
+        "configMounts": {
+          "type": "array",
+          "default": [],
+          "description": "Config mounts"
+        },
+        "secretMounts": {
+          "type": "array",
+          "default": [],
+          "description": "Secret mounts"
+        }
+      }
+    },
+    "worker": {
+      "type": "object",
+      "properties": {
+        "priorityClassName": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Priority class name for worker"
+        },
+        "deployment": {
+          "type": "object",
+          "properties": {
+            "annotations": {
+              "type": "object",
+              "default": {},
+              "description": "Deployment annotations"
+            },
+            "progressDeadlineSeconds": {
+              "type": "integer",
+              "default": 600,
+              "description": "Progress deadline in seconds"
+            },
+            "revisionHistoryLimit": {
+              "type": "integer",
+              "default": 10,
+              "description": "Number of old ReplicaSets to retain"
+            },
+            "strategy": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "default": "RollingUpdate",
+                  "description": "Deployment strategy type"
+                },
+                "rollingUpdate": {
+                  "type": "object",
+                  "properties": {
+                    "maxSurge": {
+                      "type": "string",
+                      "default": "25%",
+                      "description": "Max surge during rolling update"
+                    },
+                    "maxUnavailable": {
+                      "type": "string",
+                      "default": "25%",
+                      "description": "Max unavailable during rolling update"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "jvm": {
+          "type": "object",
+          "properties": {
+            "maxHeapSize": {
+              "type": "string",
+              "default": "2457M",
+              "description": "JVM max heap size"
+            },
+            "gcMethod": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "default": "UseG1GC",
+                  "description": "Garbage collection method"
+                },
+                "g1": {
+                  "type": "object",
+                  "properties": {
+                    "heapRegionSize": {
+                      "type": "string",
+                      "default": "32M",
+                      "description": "G1 heap region size"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "memory": {
+              "type": "object",
+              "properties": {
+                "heapHeadroomPerNode": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Heap headroom per node"
+                }
+              }
+            },
+            "query": {
+              "type": "object",
+              "properties": {
+                "maxMemoryPerNode": {
+                  "type": "string",
+                  "default": "1GB",
+                  "description": "Max memory per node for queries"
+                }
+              }
+            }
+          }
+        },
+        "additionalJVMConfig": {
+          "type": "array",
+          "default": [],
+          "description": "Additional JVM configuration"
+        },
+        "additionalExposedPorts": {
+          "type": "object",
+          "default": {},
+          "description": "Additional exposed ports"
+        },
+        "resources": {
+          "$ref": "#/definitions/io.k8s.api.core.v1.ResourceRequirements",
+          "description": "Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+        },
+        "livenessProbe": {
+          "type": "object",
+          "default": {},
+          "description": "Liveness probe configuration"
+        },
+        "readinessProbe": {
+          "type": "object",
+          "default": {},
+          "description": "Readiness probe configuration"
+        },
+        "lifecycle": {
+          "type": "object",
+          "default": {},
+          "description": "Lifecycle events configuration"
+        },
+        "gracefulShutdown": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable graceful shutdown"
+            },
+            "gracePeriodSeconds": {
+              "type": "integer",
+              "default": 120,
+              "description": "Grace period in seconds"
+            }
+          }
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "default": 30,
+          "description": "Termination grace period"
+        },
+        "nodeSelector": {
+          "type": "object",
+          "default": {},
+          "description": "Node selector"
+        },
+        "tolerations": {
+          "type": "array",
+          "default": [],
+          "description": "Pod tolerations"
+        },
+        "affinity": {
+          "type": "object",
+          "default": {},
+          "description": "Pod affinity"
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "default": [],
+          "description": "Topology spread constraints"
+        },
+        "additionalConfigFiles": {
+          "type": "object",
+          "default": {},
+          "description": "Additional config files"
+        },
+        "additionalVolumes": {
+          "type": "array",
+          "default": [],
+          "description": "Additional volumes"
+        },
+        "additionalVolumeMounts": {
+          "type": "array",
+          "default": [],
+          "description": "Additional volume mounts"
+        },
+        "annotations": {
+          "type": "object",
+          "default": {},
+          "description": "Pod annotations"
+        },
+        "labels": {
+          "type": "object",
+          "default": {},
+          "description": "Pod labels"
+        },
+        "configMounts": {
+          "type": "array",
+          "default": [],
+          "description": "Config mounts"
+        },
+        "secretMounts": {
+          "type": "array",
+          "default": [],
+          "description": "Secret mounts"
+        }
+      }
+    },
+    "kafka": {
+      "type": "object",
+      "properties": {
+        "mountPath": {
+          "type": "string",
+          "default": "/etc/trino/schemas",
+          "description": "Kafka mount path"
+        },
+        "tableDescriptions": {
+          "type": "object",
+          "default": {},
+          "description": "Kafka table descriptions"
+        }
+      }
+    },
+    "jmx": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable JMX metrics"
+        },
+        "registryPort": {
+          "type": "integer",
+          "default": 9080,
+          "description": "JMX registry port"
+        },
+        "serverPort": {
+          "type": "integer",
+          "default": 9081,
+          "description": "JMX server port"
+        },
+        "exporter": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable JMX exporter"
+            },
+            "image": {
+              "type": "string",
+              "default": "bitnamilegacy/jmx-exporter:1.4.0",
+              "description": "JMX exporter image"
+            },
+            "pullPolicy": {
+              "type": "string",
+              "default": "Always",
+              "description": "Image pull policy"
+            },
+            "port": {
+              "type": "integer",
+              "default": 5556,
+              "description": "JMX exporter port"
+            },
+            "configProperties": {
+              "type": "string",
+              "default": "",
+              "description": "JMX exporter config properties"
+            },
+            "securityContext": {
+              "type": "object",
+              "default": {},
+              "description": "Security context"
+            },
+            "resources": {
+              "$ref": "#/definitions/io.k8s.api.core.v1.ResourceRequirements",
+              "description": "Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+            }
+          }
+        },
+        "coordinator": {
+          "type": "object",
+          "default": {},
+          "description": "Coordinator JMX overrides"
+        },
+        "worker": {
+          "type": "object",
+          "default": {},
+          "description": "Worker JMX overrides"
+        }
+      }
+    },
+    "serviceMonitor": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable ServiceMonitor for Prometheus"
+        },
+        "apiVersion": {
+          "type": "string",
+          "default": "monitoring.coreos.com/v1",
+          "description": "ServiceMonitor API version"
+        },
+        "labels": {
+          "type": "object",
+          "default": {
+            "prometheus": "kube-prometheus"
+          },
+          "description": "ServiceMonitor labels"
+        },
+        "interval": {
+          "type": "string",
+          "default": "30s",
+          "description": "Scrape interval"
+        },
+        "scrapeTimeout": {
+          "type": "string",
+          "default": "",
+          "description": "Scrape timeout"
+        },
+        "coordinator": {
+          "type": "object",
+          "default": {},
+          "description": "Coordinator ServiceMonitor overrides"
+        },
+        "worker": {
+          "type": "object",
+          "default": {},
+          "description": "Worker ServiceMonitor overrides"
+        }
+      }
+    },
+    "commonLabels": {
+      "type": "object",
+      "default": {
+        "app.kubernetes.io/part-of": "trino"
+      },
+      "description": "Labels applied to all resources",
+       "additionalProperties": {
+         "type": "string"
+        }
+    },
+    "ingress": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Ingress"
+        },
+        "className": {
+          "type": "string",
+          "default": "",
+          "description": "Ingress class name"
+        },
+        "annotations": {
+          "type": "object",
+          "default": {
+            "gateway-api-converter.netcracker.com/ignore": "true"
+          },
+          "description": "Ingress annotations",
+          "additionalProperties": {
+            "type": "string"
+        }
+        },
+        "hosts": {
+          "type": "array",
+          "default": [],
+          "description": "Ingress hosts"
+        },
+        "tls": {
+          "type": "array",
+          "default": [],
+          "description": "TLS configuration"
+        }
+      }
+    },
+    "gateway": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Gateway API"
+        },
+        "annotations": {
+          "type": "object",
+          "default": {},
+          "description": "Gateway annotations"
+        },
+        "parentRefs": {
+          "type": "array",
+          "default": [],
+          "description": "Parent gateway references"
+        },
+        "hostnames": {
+          "type": "array",
+          "default": [],
+          "description": "Gateway hostnames"
+        },
+        "rules": {
+          "type": "array",
+          "default": [],
+          "description": "HTTPRoute rules"
+        },
+        "redirectRoute": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable redirect route"
+            },
+            "parentRefs": {
+              "type": "array",
+              "default": [],
+              "description": "Redirect route parent refs"
+            }
+          }
+        },
+        "backendTLSPolicy": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable backend TLS policy"
+            },
+            "hostname": {
+              "type": "string",
+              "default": "",
+              "description": "Backend hostname"
+            },
+            "caCertificateRefs": {
+              "type": "array",
+              "default": [],
+              "description": "CA certificate references"
+            },
+            "wellKnownCACertificates": {
+              "type": "string",
+              "default": "",
+              "description": "Well-known CA certificates"
+            },
+            "subjectAltNames": {
+              "type": "array",
+              "default": [],
+              "description": "Subject alternative names"
+            }
+          }
+        }
+      }
+    },
+    "networkPolicy": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable NetworkPolicy"
+        },
+        "ingress": {
+          "type": "array",
+          "default": [],
+          "description": "Additional ingress rules"
+        },
+        "egress": {
+          "type": "array",
+          "default": [],
+          "description": "Egress rules"
+        }
+      }
+    },
+    "tls": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable TLS"
+        },
+        "secretMounts": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "cert",
+              "description": "Secret mount name"
+            },
+            "secretName": {
+              "type": "string",
+              "default": "trino-server-tls-cert",
+              "description": "Secret name"
+            },
+            "path": {
+              "type": "string",
+              "default": "/etc/trino/certs/",
+              "description": "Mount path"
+            }
+          }
+        },
+        "generateCerts": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable certificate generation"
+            },
+            "secretName": {
+              "type": "string",
+              "default": "trino-cm-tls-cert",
+              "description": "Generated secret name"
+            },
+            "secretMounts": {
+              "type": "array",
+              "default": [
+                {
+                  "mountPath": "/home/trino/trustcerts/ca.crt",
+                  "subPath": "ca.crt"
+                },
+                {
+                  "mountPath": "/etc/trino/certs/"
+                }
+              ],
+              "description": "Generated certificate mounts"
+            },
+            "duration": {
+              "type": "integer",
+              "default": 365,
+              "description": "Certificate validity duration in days"
+            },
+            "subjectAlternativeName": {
+              "type": "object",
+              "properties": {
+                "additionalDnsNames": {
+                  "type": "array",
+                  "default": [],
+                  "description": "Additional DNS names"
+                },
+                "additionalIpAddresses": {
+                  "type": "array",
+                  "default": [],
+                  "description": "Additional IP addresses"
+                }
+              }
+            },
+            "clusterIssuerName": {
+              "type": "string",
+              "default": "common-cluster-issuer",
+              "description": "Cluster issuer name"
+            }
+          }
+        }
+      }
+    }
+  }
+}
