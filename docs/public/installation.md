@@ -187,6 +187,8 @@ Required Environment Variable:
 # Parameters
 
 This chart is based on community chart: https://github.com/trinodb/charts with a few minor changes.
+It also includes a values.schema.json file, a custom schema that defines the structure, types, and allowed fields for values.yaml, ensuring configurations are valid and consistent. This enables Helm to validate the inputs during linting and templating, helping prevent misconfigurations at deployment time.
+
 The following table lists the configurable parameters of the Trino chart and their default values.
 
 | Parameter                                           | Description                                                                                                                                                                                                                                                                                                                                                                                                      | Default                                              |
