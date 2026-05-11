@@ -5,6 +5,7 @@ WORKDIR /app
 COPY docker-transfer/sync.py /app/sync.py
 COPY chart /app/chart
 COPY docs /app/docs
+COPY docker-transfer/validation.py /app/validation.py
 
 RUN pip install --no-cache-dir ruamel.yaml pyyaml && \
     python validation.py chart/helm/trino/values.yaml chart/helm/trino/values.schema.json && \
