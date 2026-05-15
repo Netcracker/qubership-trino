@@ -1268,454 +1268,454 @@
               "cpu": "500m",
               "memory": "3G"
             }
-          },
-          "livenessProbe": {
-            "type": "object",
-            "default": {},
-            "description": "Liveness probe configuration"
-          },
-          "readinessProbe": {
-            "type": "object",
-            "default": {},
-            "description": "Readiness probe configuration"
-          },
-          "lifecycle": {
-            "type": "object",
-            "default": {},
-            "description": "Lifecycle events configuration"
-          },
-          "gracefulShutdown": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": false,
-                "description": "Enable graceful shutdown"
-              },
-              "gracePeriodSeconds": {
-                "type": "integer",
-                "default": 120,
-                "description": "Grace period in seconds"
-              }
-            }
-          },
-          "terminationGracePeriodSeconds": {
-            "type": "integer",
-            "default": 30,
-            "description": "Termination grace period"
-          },
-          "nodeSelector": {
-            "type": "object",
-            "default": {},
-            "description": "Node selector"
-          },
-          "tolerations": {
-            "type": "array",
-            "default": [],
-            "description": "Pod tolerations"
-          },
-          "affinity": {
-            "type": "object",
-            "default": {},
-            "description": "Pod affinity"
-          },
-          "topologySpreadConstraints": {
-            "type": "array",
-            "default": [],
-            "description": "Topology spread constraints"
-          },
-          "additionalConfigFiles": {
-            "type": "object",
-            "default": {},
-            "description": "Additional config files"
-          },
-          "additionalVolumes": {
-            "type": "array",
-            "default": [],
-            "description": "Additional volumes"
-          },
-          "additionalVolumeMounts": {
-            "type": "array",
-            "default": [],
-            "description": "Additional volume mounts"
-          },
-          "annotations": {
-            "type": "object",
-            "default": {},
-            "description": "Pod annotations"
-          },
-          "labels": {
-            "type": "object",
-            "default": {},
-            "description": "Pod labels"
-          },
-          "configMounts": {
-            "type": "array",
-            "default": [],
-            "description": "Config mounts"
-          },
-          "secretMounts": {
-            "type": "array",
-            "default": [],
-            "description": "Secret mounts"
           }
-        }
-      },
-      "kafka": {
-        "type": "object",
-        "properties": {
-          "mountPath": {
-            "type": "string",
-            "default": "/etc/trino/schemas",
-            "description": "Kafka mount path"
-          },
-          "tableDescriptions": {
-            "type": "object",
-            "default": {},
-            "description": "Kafka table descriptions"
-          }
-        }
-      },
-      "jmx": {
-        "type": "object",
-        "properties": {
-          "enabled": {
-            "type": "boolean",
-            "default": false,
-            "description": "Enable JMX metrics"
-          },
-          "registryPort": {
-            "type": "integer",
-            "default": 9080,
-            "description": "JMX registry port"
-          },
-          "serverPort": {
-            "type": "integer",
-            "default": 9081,
-            "description": "JMX server port"
-          },
-          "exporter": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": false,
-                "description": "Enable JMX exporter"
-              },
-              "image": {
-                "type": "string",
-                "default": "bitnamilegacy/jmx-exporter:1.4.0",
-                "description": "JMX exporter image"
-              },
-              "pullPolicy": {
-                "type": "string",
-                "default": "Always",
-                "description": "Image pull policy"
-              },
-              "port": {
-                "type": "integer",
-                "default": 5556,
-                "description": "JMX exporter port"
-              },
-              "configProperties": {
-                "type": "string",
-                "default": "",
-                "description": "JMX exporter config properties"
-              },
-              "securityContext": {
-                "type": "object",
-                "description": "Container-level security context for the jmx Pod.",
-                "$ref": "#/definitions/io.k8s.api.core.v1.SecurityContext",
-                "default": {}
-              },
-              "resources": {
-                "$ref": "#/definitions/io.k8s.api.core.v1.ResourceRequirements",
-                "description": "Compute Resources required by jmx container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-                "default": {}
-              }
-            }
-          },
-          "coordinator": {
-            "type": "object",
-            "default": {},
-            "description": "Coordinator JMX overrides"
-          },
-          "worker": {
-            "type": "object",
-            "default": {},
-            "description": "Worker JMX overrides"
-          }
-        }
-      },
-      "serviceMonitor": {
-        "type": "object",
-        "properties": {
-          "enabled": {
-            "type": "boolean",
-            "default": false,
-            "description": "Enable ServiceMonitor for Prometheus"
-          },
-          "apiVersion": {
-            "type": "string",
-            "default": "monitoring.coreos.com/v1",
-            "description": "ServiceMonitor API version"
-          },
-          "labels": {
-            "type": "object",
-            "default": {
-              "prometheus": "kube-prometheus"
-            },
-            "description": "ServiceMonitor labels"
-          },
-          "interval": {
-            "type": "string",
-            "default": "30s",
-            "description": "Scrape interval"
-          },
-          "scrapeTimeout": {
-            "type": "string",
-            "default": "",
-            "description": "Scrape timeout"
-          },
-          "coordinator": {
-            "type": "object",
-            "default": {},
-            "description": "Coordinator ServiceMonitor overrides"
-          },
-          "worker": {
-            "type": "object",
-            "default": {},
-            "description": "Worker ServiceMonitor overrides"
-          }
-        }
-      },
-      "commonLabels": {
-        "type": "object",
-        "default": {
-          "app.kubernetes.io/part-of": "trino"
         },
-        "description": "Labels applied to all resources",
-        "additionalProperties": {
-          "type": "string"
-        }
-      },
-      "ingress": {
-        "type": "object",
-        "properties": {
-          "enabled": {
-            "type": "boolean",
-            "default": false,
-            "description": "Enable Ingress"
-          },
-          "className": {
-            "type": "string",
-            "default": "",
-            "description": "Ingress class name"
-          },
-          "annotations": {
-            "type": "object",
-            "default": {
-              "gateway-api-converter.netcracker.com/ignore": "true"
+        "livenessProbe": {
+          "type": "object",
+          "default": {},
+          "description": "Liveness probe configuration"
+        },
+        "readinessProbe": {
+          "type": "object",
+          "default": {},
+          "description": "Readiness probe configuration"
+        },
+        "lifecycle": {
+          "type": "object",
+          "default": {},
+          "description": "Lifecycle events configuration"
+        },
+        "gracefulShutdown": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable graceful shutdown"
             },
-            "description": "Ingress annotations",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "hosts": {
-            "type": "array",
-            "default": [],
-            "description": "Ingress hosts"
-          },
-          "tls": {
-            "type": "array",
-            "default": [],
-            "description": "TLS configuration"
-          }
-        }
-      },
-      "gateway": {
-        "type": "object",
-        "properties": {
-          "enabled": {
-            "type": "boolean",
-            "default": false,
-            "description": "Enable Gateway API"
-          },
-          "annotations": {
-            "type": "object",
-            "default": {},
-            "description": "Gateway annotations"
-          },
-          "parentRefs": {
-            "type": "array",
-            "default": [],
-            "description": "Parent gateway references"
-          },
-          "hostnames": {
-            "type": "array",
-            "default": [],
-            "description": "Gateway hostnames"
-          },
-          "rules": {
-            "type": "array",
-            "default": [],
-            "description": "HTTPRoute rules"
-          },
-          "redirectRoute": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": false,
-                "description": "Enable redirect route"
-              },
-              "parentRefs": {
-                "type": "array",
-                "default": [],
-                "description": "Redirect route parent refs"
-              }
-            }
-          },
-          "backendTLSPolicy": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": false,
-                "description": "Enable backend TLS policy"
-              },
-              "hostname": {
-                "type": "string",
-                "default": "",
-                "description": "Backend hostname"
-              },
-              "caCertificateRefs": {
-                "type": "array",
-                "default": [],
-                "description": "CA certificate references"
-              },
-              "wellKnownCACertificates": {
-                "type": "string",
-                "default": "",
-                "description": "Well-known CA certificates"
-              },
-              "subjectAltNames": {
-                "type": "array",
-                "default": [],
-                "description": "Subject alternative names"
-              }
+            "gracePeriodSeconds": {
+              "type": "integer",
+              "default": 120,
+              "description": "Grace period in seconds"
             }
           }
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "default": 30,
+          "description": "Termination grace period"
+        },
+        "nodeSelector": {
+          "type": "object",
+          "default": {},
+          "description": "Node selector"
+        },
+        "tolerations": {
+          "type": "array",
+          "default": [],
+          "description": "Pod tolerations"
+        },
+        "affinity": {
+          "type": "object",
+          "default": {},
+          "description": "Pod affinity"
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "default": [],
+          "description": "Topology spread constraints"
+        },
+        "additionalConfigFiles": {
+          "type": "object",
+          "default": {},
+          "description": "Additional config files"
+        },
+        "additionalVolumes": {
+          "type": "array",
+          "default": [],
+          "description": "Additional volumes"
+        },
+        "additionalVolumeMounts": {
+          "type": "array",
+          "default": [],
+          "description": "Additional volume mounts"
+        },
+        "annotations": {
+          "type": "object",
+          "default": {},
+          "description": "Pod annotations"
+        },
+        "labels": {
+          "type": "object",
+          "default": {},
+          "description": "Pod labels"
+        },
+        "configMounts": {
+          "type": "array",
+          "default": [],
+          "description": "Config mounts"
+        },
+        "secretMounts": {
+          "type": "array",
+          "default": [],
+          "description": "Secret mounts"
         }
-      },
-      "networkPolicy": {
-        "type": "object",
-        "properties": {
-          "enabled": {
-            "type": "boolean",
-            "default": false,
-            "description": "Enable NetworkPolicy"
-          },
-          "ingress": {
-            "type": "array",
-            "default": [],
-            "description": "Additional ingress rules"
-          },
-          "egress": {
-            "type": "array",
-            "default": [],
-            "description": "Egress rules"
-          }
+      }
+    },
+    "kafka": {
+      "type": "object",
+      "properties": {
+        "mountPath": {
+          "type": "string",
+          "default": "/etc/trino/schemas",
+          "description": "Kafka mount path"
+        },
+        "tableDescriptions": {
+          "type": "object",
+          "default": {},
+          "description": "Kafka table descriptions"
         }
-      },
-      "tls": {
-        "type": "object",
-        "properties": {
-          "enabled": {
-            "type": "boolean",
-            "default": false,
-            "description": "Enable TLS"
-          },
-          "secretMounts": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "default": "cert",
-                "description": "Secret mount name"
-              },
-              "secretName": {
-                "type": "string",
-                "default": "trino-server-tls-cert",
-                "description": "Secret name"
-              },
-              "path": {
-                "type": "string",
-                "default": "/etc/trino/certs/",
-                "description": "Mount path"
-              }
+      }
+    },
+    "jmx": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable JMX metrics"
+        },
+        "registryPort": {
+          "type": "integer",
+          "default": 9080,
+          "description": "JMX registry port"
+        },
+        "serverPort": {
+          "type": "integer",
+          "default": 9081,
+          "description": "JMX server port"
+        },
+        "exporter": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable JMX exporter"
+            },
+            "image": {
+              "type": "string",
+              "default": "bitnamilegacy/jmx-exporter:1.4.0",
+              "description": "JMX exporter image"
+            },
+            "pullPolicy": {
+              "type": "string",
+              "default": "Always",
+              "description": "Image pull policy"
+            },
+            "port": {
+              "type": "integer",
+              "default": 5556,
+              "description": "JMX exporter port"
+            },
+            "configProperties": {
+              "type": "string",
+              "default": "",
+              "description": "JMX exporter config properties"
+            },
+            "securityContext": {
+              "type": "object",
+              "description": "Container-level security context for the jmx Pod.",
+              "$ref": "#/definitions/io.k8s.api.core.v1.SecurityContext",
+              "default": {}
+            },
+            "resources": {
+              "$ref": "#/definitions/io.k8s.api.core.v1.ResourceRequirements",
+              "description": "Compute Resources required by jmx container. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+              "default": {}
             }
+          }
+        },
+        "coordinator": {
+          "type": "object",
+          "default": {},
+          "description": "Coordinator JMX overrides"
+        },
+        "worker": {
+          "type": "object",
+          "default": {},
+          "description": "Worker JMX overrides"
+        }
+      }
+    },
+    "serviceMonitor": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable ServiceMonitor for Prometheus"
+        },
+        "apiVersion": {
+          "type": "string",
+          "default": "monitoring.coreos.com/v1",
+          "description": "ServiceMonitor API version"
+        },
+        "labels": {
+          "type": "object",
+          "default": {
+            "prometheus": "kube-prometheus"
           },
-          "generateCerts": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": false,
-                "description": "Enable certificate generation"
-              },
-              "secretName": {
-                "type": "string",
-                "default": "trino-cm-tls-cert",
-                "description": "Generated secret name"
-              },
-              "secretMounts": {
-                "type": "array",
-                "default": [
-                  {
-                    "mountPath": "/home/trino/trustcerts/ca.crt",
-                    "subPath": "ca.crt"
-                  },
-                  {
-                    "mountPath": "/etc/trino/certs/"
-                  }
-                ],
-                "description": "Generated certificate mounts"
-              },
-              "duration": {
-                "type": "integer",
-                "default": 365,
-                "description": "Certificate validity duration in days"
-              },
-              "subjectAlternativeName": {
-                "type": "object",
-                "properties": {
-                  "additionalDnsNames": {
-                    "type": "array",
-                    "default": [],
-                    "description": "Additional DNS names"
-                  },
-                  "additionalIpAddresses": {
-                    "type": "array",
-                    "default": [],
-                    "description": "Additional IP addresses"
-                  }
-                }
-              },
-              "clusterIssuerName": {
-                "type": "string",
-                "default": "common-cluster-issuer",
-                "description": "Cluster issuer name"
-              }
+          "description": "ServiceMonitor labels"
+        },
+        "interval": {
+          "type": "string",
+          "default": "30s",
+          "description": "Scrape interval"
+        },
+        "scrapeTimeout": {
+          "type": "string",
+          "default": "",
+          "description": "Scrape timeout"
+        },
+        "coordinator": {
+          "type": "object",
+          "default": {},
+          "description": "Coordinator ServiceMonitor overrides"
+        },
+        "worker": {
+          "type": "object",
+          "default": {},
+          "description": "Worker ServiceMonitor overrides"
+        }
+      }
+    },
+    "commonLabels": {
+      "type": "object",
+      "default": {
+        "app.kubernetes.io/part-of": "trino"
+      },
+      "description": "Labels applied to all resources",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Ingress"
+        },
+        "className": {
+          "type": "string",
+          "default": "",
+          "description": "Ingress class name"
+        },
+        "annotations": {
+          "type": "object",
+          "default": {
+            "gateway-api-converter.netcracker.com/ignore": "true"
+          },
+          "description": "Ingress annotations",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "hosts": {
+          "type": "array",
+          "default": [],
+          "description": "Ingress hosts"
+        },
+        "tls": {
+          "type": "array",
+          "default": [],
+          "description": "TLS configuration"
+        }
+      }
+    },
+    "gateway": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Gateway API"
+        },
+        "annotations": {
+          "type": "object",
+          "default": {},
+          "description": "Gateway annotations"
+        },
+        "parentRefs": {
+          "type": "array",
+          "default": [],
+          "description": "Parent gateway references"
+        },
+        "hostnames": {
+          "type": "array",
+          "default": [],
+          "description": "Gateway hostnames"
+        },
+        "rules": {
+          "type": "array",
+          "default": [],
+          "description": "HTTPRoute rules"
+        },
+        "redirectRoute": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable redirect route"
+            },
+            "parentRefs": {
+              "type": "array",
+              "default": [],
+              "description": "Redirect route parent refs"
+            }
+          }
+        },
+        "backendTLSPolicy": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable backend TLS policy"
+            },
+            "hostname": {
+              "type": "string",
+              "default": "",
+              "description": "Backend hostname"
+            },
+            "caCertificateRefs": {
+              "type": "array",
+              "default": [],
+              "description": "CA certificate references"
+            },
+            "wellKnownCACertificates": {
+              "type": "string",
+              "default": "",
+              "description": "Well-known CA certificates"
+            },
+            "subjectAltNames": {
+              "type": "array",
+              "default": [],
+              "description": "Subject alternative names"
             }
           }
         }
       }
     },
-    "PAAS_PLATFORM": {
-      "type": "string",
-      "description": "The PaaS platform where Hive Metastore is being deployed to."
+    "networkPolicy": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable NetworkPolicy"
+        },
+        "ingress": {
+          "type": "array",
+          "default": [],
+          "description": "Additional ingress rules"
+        },
+        "egress": {
+          "type": "array",
+          "default": [],
+          "description": "Egress rules"
+        }
+      }
+    },
+    "tls": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable TLS"
+        },
+        "secretMounts": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "cert",
+              "description": "Secret mount name"
+            },
+            "secretName": {
+              "type": "string",
+              "default": "trino-server-tls-cert",
+              "description": "Secret name"
+            },
+            "path": {
+              "type": "string",
+              "default": "/etc/trino/certs/",
+              "description": "Mount path"
+            }
+          }
+        },
+        "generateCerts": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable certificate generation"
+            },
+            "secretName": {
+              "type": "string",
+              "default": "trino-cm-tls-cert",
+              "description": "Generated secret name"
+            },
+            "secretMounts": {
+              "type": "array",
+              "default": [
+                {
+                  "mountPath": "/home/trino/trustcerts/ca.crt",
+                  "subPath": "ca.crt"
+                },
+                {
+                  "mountPath": "/etc/trino/certs/"
+                }
+              ],
+              "description": "Generated certificate mounts"
+            },
+            "duration": {
+              "type": "integer",
+              "default": 365,
+              "description": "Certificate validity duration in days"
+            },
+            "subjectAlternativeName": {
+              "type": "object",
+              "properties": {
+                "additionalDnsNames": {
+                  "type": "array",
+                  "default": [],
+                  "description": "Additional DNS names"
+                },
+                "additionalIpAddresses": {
+                  "type": "array",
+                  "default": [],
+                  "description": "Additional IP addresses"
+                }
+              }
+            },
+            "clusterIssuerName": {
+              "type": "string",
+              "default": "common-cluster-issuer",
+              "description": "Cluster issuer name"
+            }
+          }
+        }
+      }
     }
+  },
+  "PAAS_PLATFORM": {
+    "type": "string",
+    "description": "The PaaS platform where Hive Metastore is being deployed to."
   }
 }
