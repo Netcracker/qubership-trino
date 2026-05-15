@@ -864,7 +864,10 @@
         "annotations": {
           "type": "object",
           "default": {},
-          "description": "Service annotations"
+          "description": "Service annotations",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "type": {
           "type": "string",
@@ -877,7 +880,7 @@
           "description": "Service port"
         },
         "nodePort": {
-          "type": "string",
+          "type": ["string", "integer"],
           "default": "",
           "description": "Node port for NodePort service type"
         }
@@ -904,7 +907,9 @@
         "annotations": {
           "type": "object",
           "default": {},
-          "description": "Service account annotations"
+          "description": "Service account annotations",
+          "additionalProperties": {
+            "type": "string"
         }
       }
     },
@@ -935,7 +940,10 @@
             "annotations": {
               "type": "object",
               "default": {},
-              "description": "Deployment annotations"
+              "description": "Deployment annotations",
+              "additionalProperties": {
+                "type": "string"
+              }
             },
             "progressDeadlineSeconds": {
               "type": "integer",
@@ -1116,12 +1124,18 @@
         "annotations": {
           "type": "object",
           "default": {},
-          "description": "Pod annotations"
+          "description": "Pod annotations",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "labels": {
           "type": "object",
           "default": {},
-          "description": "Pod labels"
+          "description": "Pod labels",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "configMounts": {
           "type": "array",
@@ -1152,7 +1166,10 @@
             "annotations": {
               "type": "object",
               "default": {},
-              "description": "Deployment annotations"
+              "description": "Deployment annotations",
+              "additionalProperties": {
+                "type": "string"
+              }
             },
             "progressDeadlineSeconds": {
               "type": "integer",
@@ -1343,12 +1360,18 @@
         "annotations": {
           "type": "object",
           "default": {},
-          "description": "Pod annotations"
+          "description": "Pod annotations",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "labels": {
           "type": "object",
           "default": {},
-          "description": "Pod labels"
+          "description": "Pod labels",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "configMounts": {
           "type": "array",
@@ -1466,7 +1489,10 @@
           "default": {
             "prometheus": "kube-prometheus"
           },
-          "description": "ServiceMonitor labels"
+          "description": "ServiceMonitor labels",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "interval": {
           "type": "string",
@@ -1546,7 +1572,10 @@
         "annotations": {
           "type": "object",
           "default": {},
-          "description": "Gateway annotations"
+          "description": "Gateway annotations",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "parentRefs": {
           "type": "array",
