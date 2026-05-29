@@ -6,6 +6,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "trino.labels" . | nindent 4 }}
+#--Qubership custom change: Ingress specific labels    
+    {{- include "ingress.labels" . | nindent 4}}
   annotations:
     {{- toYaml .Values.ingress.annotations | nindent 4 }}
 spec:

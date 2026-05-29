@@ -1247,6 +1247,8 @@ commonLabels:
 ingress:
   enabled: false
   className: ""
+#--Qubership custom change: Ingress specific labels    
+  labels: {}
   annotations:
   # Qbuership custom change: migration to Gateway API, ignore ingress resources
     gateway-api-converter.netcracker.com/ignore: "true"

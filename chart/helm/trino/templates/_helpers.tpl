@@ -189,3 +189,13 @@ Hive Metastore URI
 {{- define "hive.metastore.uri" -}}
 {{ printf "thrift://%s:%v" (.Values.hive.host) (.Values.hive.port) }} 
 {{- end -}}
+
+#--Qubership custom change: Ingress specific labels
+{{/*
+Ingress labels
+*/}}
+{{- define "ingress.labels" -}}
+{{- if .Values.ingress.labels }}
+{{ tpl (toYaml .Values.ingress.labels) . }}
+{{- end }}
+{{- end -}}
