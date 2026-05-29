@@ -1757,10 +1757,10 @@
           }
         }
       }
+    },
+    "PAAS_PLATFORM": {
+      "type": "string",
+      "description": "The PaaS platform where Hive Metastore is being deployed to."
     }
-  },
-  "PAAS_PLATFORM": {
-    "type": "string",
-    "description": "The PaaS platform where Hive Metastore is being deployed to."
   }
 }
