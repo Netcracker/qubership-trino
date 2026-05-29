@@ -436,8 +436,8 @@ spec:
 ```yaml
 metadata:
   labels:
+#--Qubership custom change: Ingress specific labels      
     {{- $labels := fromYaml (include "trino.labels" .) | default dict }}
-    #--Qubership custom change: Ingress specific labels    
     {{- $customLabels := .Values.ingress.labels | default dict }}
     {{- mustMerge $labels $customLabels | toYaml | nindent 4 }}
 spec:
