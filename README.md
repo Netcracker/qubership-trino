@@ -36,6 +36,11 @@ additionalNodeProperties:
   - http-server.log.enabled=false
   - http-server.log.console.enabled=true    
 ingress:
+#--Qubership custom change: Ingress specific labels    
+  labels:
+    app.kubernetes.io/component: ingress
+    deployment.netcracker.com/ingress-type: public-network
+    deployment.netcracker.com/ingress-audience-type: conf-user
   annotations:
 # Qbuership custom change: migration to Gateway API, ignore ingress resources  
     gateway-api-converter.netcracker.com/ignore: "true"     
@@ -429,6 +434,12 @@ spec:
 ### `ingress.yaml`
 
 ```yaml
+metadata:
+  labels:
+#--Qubership custom change: Ingress specific labels      
+    {{- $labels := fromYaml (include "trino.labels" .) | default dict }}
+    {{- $customLabels := .Values.ingress.labels | default dict }}
+    {{- mustMerge $labels $customLabels | toYaml | nindent 4 }}
 spec:
     rules:
     {{- range .Values.ingress.hosts }}

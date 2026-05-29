@@ -5,7 +5,10 @@ metadata:
   name: {{ template "trino.coordinator" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "trino.labels" . | nindent 4 }}
+#--Qubership custom change: Ingress specific labels  
+    {{- $labels := fromYaml (include "trino.labels" .) | default dict }}
+    {{- $customLabels := .Values.ingress.labels | default dict }}
+    {{- mustMerge $labels $customLabels | toYaml | nindent 4 }}
   annotations:
     {{- toYaml .Values.ingress.annotations | nindent 4 }}
 spec:
