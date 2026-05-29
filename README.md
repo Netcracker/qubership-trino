@@ -37,7 +37,10 @@ additionalNodeProperties:
   - http-server.log.console.enabled=true    
 ingress:
 #--Qubership custom change: Ingress specific labels    
-  labels: {}  
+  labels:
+    app.kubernetes.io/component: ingress
+    deployment.netcracker.com/ingress-type: public-network
+    deployment.netcracker.com/ingress-audience-type: conf-user
   annotations:
 # Qbuership custom change: migration to Gateway API, ignore ingress resources  
     gateway-api-converter.netcracker.com/ignore: "true"     
@@ -240,16 +243,6 @@ Processed by cert-manager label for Qubership release
 {{- define "cert_manager_label" -}}
 app.kubernetes.io/processed-by-operator: cert-manager
 {{- end }}
-
-#--Qubership custom change: Ingress specific labels
-{{/*
-Ingress labels
-*/}}
-{{- define "ingress.labels" -}}
-{{- if .Values.ingress.labels }}
-{{ tpl (toYaml .Values.ingress.labels) . }}
-{{- end }}
-{{- end -}}
 ```
 ---
 
@@ -444,7 +437,7 @@ spec:
 metadata:
   labels:
 #--Qubership custom change: Ingress specific labels    
-    {{- include "ingress.labels" . | nindent 4}}
+    {{- toYaml .Values.ingress.labels | nindent 4 }}
 spec:
     rules:
     {{- range .Values.ingress.hosts }}
