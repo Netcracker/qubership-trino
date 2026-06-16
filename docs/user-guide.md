@@ -128,7 +128,7 @@ To use DBeaver as a Trino client, the following configuration should be done:
     * Port: Navigate to K8s and open the Trino service. The port is specified at `spec.ports.nodePort`.
     * Username and password are specified during the deployment. By default, `admin` is the username and the password is blank.
       
-![DBeaver Trino Connection](/docs/public/images/DBeaver-Trino-Connection.png)
+![DBeaver Trino Connection](/docs/images/DBeaver-Trino-Connection.png)
 
 ### DBeaver passwordauth
 

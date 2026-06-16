@@ -21,7 +21,7 @@ Following are the Trino use cases:
 
 Trino installation includes one coordinator and any number of Trino workers.  
 
-![Trino Architecture](/docs/public/images/trino_architecture.png)
+![Trino Architecture](/docs/images/trino_architecture.png)
 
 The **Coordinator** node is responsible for parsing, planning, and scheduling query execution across Trino workers.  
 The coordinator node performs the following functions for each query:
@@ -65,4 +65,4 @@ The following deployment scheme is supported for on-premises.
 Currently, Trino supports only the non-HA deployment scheme. A Trino cluster consists of a coordinator and many workers. 
 By default, there is one worker.
 
-![Trino Non-HA Deployment](/docs/public/images/trino_non_ha.png)
+![Trino Non-HA Deployment](/docs/images/trino_non_ha.png)
