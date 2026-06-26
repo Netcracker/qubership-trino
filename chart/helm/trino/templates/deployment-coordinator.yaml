@@ -147,9 +147,9 @@ spec:
           secret:
             secretName: {{ tpl .secretName $ }}
         {{- end }}
+# Qubership custom change: dynamic catalog support
         {{- if .Values.dynamicCatalog.enabled }}
         {{- if eq .Values.dynamicCatalog.store "file" }}
-        # Qubership custom change: dynamic catalog support
         - name: dynamic-catalog
           persistentVolumeClaim:
             claimName: {{ if .Values.dynamicCatalog.persistence.existingClaim }}{{ .Values.dynamicCatalog.persistence.existingClaim }}{{- else }}{{ template "trino.fullname" . }}-dynamic-catalog{{- end }}
@@ -263,9 +263,9 @@ spec:
             - mountPath: {{ .Values.server.config.path }}/auth/group
               name: file-groups-authentication-volume
             {{- end }}
+# Qubership custom change: dynamic catalog support
             {{- if .Values.dynamicCatalog.enabled }}
             {{- if eq .Values.dynamicCatalog.store "file" }}
-            # Qubership custom change: dynamic catalog support
             - name: dynamic-catalog
               mountPath: {{ .Values.dynamicCatalog.configDir }}
             {{- end }}
