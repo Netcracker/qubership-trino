@@ -504,6 +504,52 @@ additionalCatalogs: {}
 # additionalCatalogs -- Deprecated, use `catalogs` instead. Configure additional
 # [catalogs](https://trino.io/docs/current/installation/deployment.html#catalog-properties).
 
+# Qubership custom change: dynamic catalog support
+# dynamicCatalog -- Enable experimental [dynamic catalog management](https://trino.io/docs/current/admin/properties-catalog.html).
+# When enabled, catalogs can be created and dropped at runtime via SQL (`CREATE CATALOG` / `DROP CATALOG`).
+# Disabled by default. Only applies to the coordinator.
+# @raw
+# Example — file store with a dedicated PVC:
+# ```yaml
+# dynamicCatalog:
+#   enabled: true
+#   store: file
+#   configDir: /etc/trino/dynamic-catalog
+#   pruneUpdateInterval: 5s
+#   persistence:
+#     storageClass: ""
+#     accessMode: ReadWriteOnce
+#     size: 1Gi
+#     existingClaim: ""
+# ```
+# Example — in-memory store (no PVC required):
+# ```yaml
+# dynamicCatalog:
+#   enabled: true
+#   store: memory
+# ```
+dynamicCatalog:
+  # dynamicCatalog.enabled -- Set to true to enable dynamic catalog management.
+  enabled: false
+  # dynamicCatalog.store -- Catalog store backend. `file` persists catalogs on disk (requires a writable PVC);
+  # `memory` keeps catalogs in memory only and ignores existing catalog files on startup.
+  store: file
+  # dynamicCatalog.configDir -- Directory on the coordinator where catalog property files are read/written.
+  # Only used when store is `file`.
+  configDir: /etc/trino/dynamic-catalog
+  # dynamicCatalog.pruneUpdateInterval -- How frequently dropped catalogs are pruned.
+  pruneUpdateInterval: 5s
+  persistence:
+    # dynamicCatalog.persistence.storageClass -- StorageClass for the dynamic catalog PVC.
+    # Leave empty to use the cluster default.
+    storageClass: ""
+    # dynamicCatalog.persistence.accessMode -- Access mode for the PVC.
+    accessMode: ReadWriteOnce
+    # dynamicCatalog.persistence.size -- Size of the PVC.
+    size: 1Gi
+    # dynamicCatalog.persistence.existingClaim -- Use an existing PVC instead of creating one.
+    existingClaim: ""
+
 env: []
 # env -- additional environment variables added to every pod, specified as a list with explicit values
 # @raw
