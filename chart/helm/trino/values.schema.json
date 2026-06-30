@@ -796,51 +796,34 @@
       "default": {},
       "description": "Additional catalogs (deprecated, use catalogs instead)"
     },
-    "dynamicCatalog": {
+    "dynamicCatalogPVC": {
       "type": "object",
-      "description": "Experimental dynamic catalog management configuration",
+      "description": "PVC for the coordinator catalog directory, used with experimental dynamic catalog management",
       "properties": {
         "enabled": {
           "type": "boolean",
           "default": false,
-          "description": "Enable dynamic catalog management (CREATE CATALOG / DROP CATALOG)"
+          "description": "Set to true to create the PVC"
         },
-        "store": {
+        "storageClass": {
           "type": "string",
-          "default": "file",
-          "enum": ["file", "memory"],
-          "description": "Catalog store backend: 'file' persists to disk (requires PVC), 'memory' is in-memory only"
+          "default": "",
+          "description": "StorageClass for the PVC; empty uses the cluster default"
         },
-        "pruneUpdateInterval": {
+        "accessMode": {
           "type": "string",
-          "default": "5s",
-          "description": "How frequently dropped catalogs are pruned (minimum 1s)"
+          "default": "ReadWriteOnce",
+          "description": "PVC access mode"
         },
-        "persistence": {
-          "type": "object",
-          "description": "PVC settings for the dynamic catalog directory (store=file only)",
-          "properties": {
-            "storageClass": {
-              "type": "string",
-              "default": "",
-              "description": "StorageClass for the PVC; empty uses the cluster default"
-            },
-            "accessMode": {
-              "type": "string",
-              "default": "ReadWriteOnce",
-              "description": "PVC access mode"
-            },
-            "size": {
-              "type": "string",
-              "default": "1Gi",
-              "description": "Storage size for the PVC"
-            },
-            "existingClaim": {
-              "type": "string",
-              "default": "",
-              "description": "Use an existing PVC name instead of creating one"
-            }
-          }
+        "size": {
+          "type": "string",
+          "default": "1Gi",
+          "description": "Storage size for the PVC"
+        },
+        "existingClaim": {
+          "type": "string",
+          "default": "",
+          "description": "Use an existing PVC name instead of creating one"
         }
       }
     },

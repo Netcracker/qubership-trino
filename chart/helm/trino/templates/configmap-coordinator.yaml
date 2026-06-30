@@ -79,14 +79,6 @@ data:
     {{- if .Values.server.coordinatorExtraConfig }}
     {{- .Values.server.coordinatorExtraConfig | nindent 4 }}
     {{- end }}
-    {{/* Qubership custom change: dynamic catalog support. */}}
-    {{- if .Values.dynamicCatalog.enabled }}
-    catalog.management=dynamic
-    catalog.store={{ .Values.dynamicCatalog.store }}
-    {{- if .Values.dynamicCatalog.pruneUpdateInterval }}
-    catalog.prune.update-interval={{ .Values.dynamicCatalog.pruneUpdateInterval }}
-    {{- end }}
-    {{- end }}
 
   {{- if .Values.accessControl }}
   {{- if eq .Values.accessControl.type "configmap" }}
@@ -194,11 +186,6 @@ data:
 {{- range $fileName, $fileContent := .Values.coordinator.additionalConfigFiles }}
   {{ $fileName }}: |
     {{- tpl $fileContent $ | nindent 4 }}
-{{- end }}
-{{/* Qubership custom change: dynamic catalog support. */}}
-{{- if and .Values.dynamicCatalog.enabled (eq .Values.dynamicCatalog.store "file") (not (index .Values.coordinator.additionalConfigFiles "catalog-store.properties")) }}
-  catalog-store.properties: |
-    catalog.config-dir={{ .Values.server.config.path }}/catalog
 {{- end }}
 {{- if and .Values.resourceGroups (eq (default "" .Values.resourceGroups.type) "configmap") }}
 ---

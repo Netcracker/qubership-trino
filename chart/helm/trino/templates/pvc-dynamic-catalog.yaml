@@ -1,5 +1,5 @@
 {{- /* Qubership custom change: dynamic catalog support */ -}}
-{{- if and .Values.dynamicCatalog.enabled (eq .Values.dynamicCatalog.store "file") (not .Values.dynamicCatalog.persistence.existingClaim) }}
+{{- if and .Values.dynamicCatalogPVC.enabled (not .Values.dynamicCatalogPVC.existingClaim) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -10,11 +10,11 @@ metadata:
     app.kubernetes.io/component: coordinator
 spec:
   accessModes:
-    - {{ .Values.dynamicCatalog.persistence.accessMode }}
+    - {{ .Values.dynamicCatalogPVC.accessMode }}
   resources:
     requests:
-      storage: {{ .Values.dynamicCatalog.persistence.size }}
-  {{- if .Values.dynamicCatalog.persistence.storageClass }}
-  storageClassName: {{ .Values.dynamicCatalog.persistence.storageClass }}
+      storage: {{ .Values.dynamicCatalogPVC.size }}
+  {{- if .Values.dynamicCatalogPVC.storageClass }}
+  storageClassName: {{ .Values.dynamicCatalogPVC.storageClass }}
   {{- end }}
 {{- end }}

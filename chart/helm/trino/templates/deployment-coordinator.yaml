@@ -75,7 +75,7 @@ spec:
         - name: config-volume
           configMap:
             name: {{ template "trino.coordinator" . }}
-        {{- if and (or .Values.catalogs .Values.additionalCatalogs) (not (and .Values.dynamicCatalog.enabled (eq .Values.dynamicCatalog.store "file"))) }}
+        {{- if or .Values.catalogs .Values.additionalCatalogs }}
         - name: catalog-volume
           secret:
             secretName: {{ template "trino.catalog" . }}
@@ -147,14 +147,6 @@ spec:
           secret:
             secretName: {{ tpl .secretName $ }}
         {{- end }}
-        {{/* Qubership custom change: dynamic catalog support. */}}
-        {{- if .Values.dynamicCatalog.enabled }}
-        {{- if eq .Values.dynamicCatalog.store "file" }}
-        - name: dynamic-catalog
-          persistentVolumeClaim:
-            claimName: {{ if .Values.dynamicCatalog.persistence.existingClaim }}{{ .Values.dynamicCatalog.persistence.existingClaim }}{{- else }}{{ template "trino.fullname" . }}-dynamic-catalog{{- end }}
-        {{- end }}
-        {{- end }}
         {{- with .Values.coordinator.additionalVolumes }}
         {{- tpl (. | toYaml) $ | nindent 8 }}
         {{- end }}
@@ -187,7 +179,7 @@ spec:
           volumeMounts:
             - mountPath: {{ .Values.server.config.path }}
               name: config-volume
-            {{- if and (or .Values.catalogs .Values.additionalCatalogs) (not (and .Values.dynamicCatalog.enabled (eq .Values.dynamicCatalog.store "file"))) }}
+            {{- if or .Values.catalogs .Values.additionalCatalogs }}
             - mountPath: {{ .Values.server.config.path }}/catalog
               name: catalog-volume
             {{- end }}
@@ -262,11 +254,6 @@ spec:
             {{- if or .Values.auth.groups .Values.auth.groupsAuthSecret }}
             - mountPath: {{ .Values.server.config.path }}/auth/group
               name: file-groups-authentication-volume
-            {{- end }}
-            {{/* Qubership custom change: dynamic catalog support. */}}
-            {{- if and .Values.dynamicCatalog.enabled (eq .Values.dynamicCatalog.store "file") }}
-            - name: dynamic-catalog
-              mountPath: {{ .Values.server.config.path }}/catalog
             {{- end }}
             {{- with .Values.coordinator.additionalVolumeMounts }}
             {{- . | toYaml | nindent 12 }}
