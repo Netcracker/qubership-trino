@@ -134,6 +134,13 @@ tls:
       additionalDnsNames: [ ]
       additionalIpAddresses: [ ]
     clusterIssuerName: common-cluster-issuer
+# Qubership custom change: dynamic catalog support
+dynamicCatalogPVC:
+  enabled: false
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  existingClaim: ""
 ```
 
 ---
