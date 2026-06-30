@@ -147,7 +147,7 @@ spec:
           secret:
             secretName: {{ tpl .secretName $ }}
         {{- end }}
-        {/* Qubership custom change: dynamic catalog support. */}}
+        {{/* Qubership custom change: dynamic catalog support. */}}
         {{- if .Values.dynamicCatalog.enabled }}
         {{- if eq .Values.dynamicCatalog.store "file" }}
         - name: dynamic-catalog
@@ -263,7 +263,7 @@ spec:
             - mountPath: {{ .Values.server.config.path }}/auth/group
               name: file-groups-authentication-volume
             {{- end }}
-            {/* Qubership custom change: dynamic catalog support. */}}
+            {{/* Qubership custom change: dynamic catalog support. */}}
             {{- if .Values.dynamicCatalog.enabled }}
             {{- if eq .Values.dynamicCatalog.store "file" }}
             - name: dynamic-catalog

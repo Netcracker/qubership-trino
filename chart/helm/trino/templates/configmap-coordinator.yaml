@@ -79,7 +79,7 @@ data:
     {{- if .Values.server.coordinatorExtraConfig }}
     {{- .Values.server.coordinatorExtraConfig | nindent 4 }}
     {{- end }}
-    {/* Qubership custom change: dynamic catalog support. */}}
+    {{/* Qubership custom change: dynamic catalog support. */}}
     {{- if .Values.dynamicCatalog.enabled }}
     catalog.management=dynamic
     catalog.store={{ .Values.dynamicCatalog.store }}
