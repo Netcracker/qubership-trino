@@ -83,9 +83,6 @@ data:
     {{- if .Values.dynamicCatalog.enabled }}
     catalog.management=dynamic
     catalog.store={{ .Values.dynamicCatalog.store }}
-    {{- if and (eq .Values.dynamicCatalog.store "file") .Values.dynamicCatalog.configDir }}
-    catalog.config-dir={{ .Values.dynamicCatalog.configDir }}
-    {{- end }}
     {{- if .Values.dynamicCatalog.pruneUpdateInterval }}
     catalog.prune.update-interval={{ .Values.dynamicCatalog.pruneUpdateInterval }}
     {{- end }}

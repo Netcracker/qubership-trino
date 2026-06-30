@@ -811,11 +811,6 @@
           "enum": ["file", "memory"],
           "description": "Catalog store backend: 'file' persists to disk (requires PVC), 'memory' is in-memory only"
         },
-        "configDir": {
-          "type": "string",
-          "default": "/etc/trino/dynamic-catalog",
-          "description": "Directory on the coordinator for catalog property files (store=file only)"
-        },
         "pruneUpdateInterval": {
           "type": "string",
           "default": "5s",

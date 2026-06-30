@@ -75,7 +75,7 @@ spec:
         - name: config-volume
           configMap:
             name: {{ template "trino.coordinator" . }}
-        {{- if or .Values.catalogs .Values.additionalCatalogs }}
+        {{- if and (or .Values.catalogs .Values.additionalCatalogs) (not (and .Values.dynamicCatalog.enabled (eq .Values.dynamicCatalog.store "file"))) }}
         - name: catalog-volume
           secret:
             secretName: {{ template "trino.catalog" . }}
@@ -187,7 +187,7 @@ spec:
           volumeMounts:
             - mountPath: {{ .Values.server.config.path }}
               name: config-volume
-            {{- if or .Values.catalogs .Values.additionalCatalogs }}
+            {{- if and (or .Values.catalogs .Values.additionalCatalogs) (not (and .Values.dynamicCatalog.enabled (eq .Values.dynamicCatalog.store "file"))) }}
             - mountPath: {{ .Values.server.config.path }}/catalog
               name: catalog-volume
             {{- end }}
@@ -264,11 +264,9 @@ spec:
               name: file-groups-authentication-volume
             {{- end }}
             {{/* Qubership custom change: dynamic catalog support. */}}
-            {{- if .Values.dynamicCatalog.enabled }}
-            {{- if eq .Values.dynamicCatalog.store "file" }}
+            {{- if and .Values.dynamicCatalog.enabled (eq .Values.dynamicCatalog.store "file") }}
             - name: dynamic-catalog
-              mountPath: {{ .Values.dynamicCatalog.configDir }}
-            {{- end }}
+              mountPath: {{ .Values.server.config.path }}/catalog
             {{- end }}
             {{- with .Values.coordinator.additionalVolumeMounts }}
             {{- . | toYaml | nindent 12 }}

@@ -514,7 +514,6 @@ additionalCatalogs: {}
 # dynamicCatalog:
 #   enabled: true
 #   store: file
-#   configDir: /etc/trino/dynamic-catalog
 #   pruneUpdateInterval: 5s
 #   persistence:
 #     storageClass: ""
@@ -534,9 +533,6 @@ dynamicCatalog:
   # dynamicCatalog.store -- Catalog store backend. `file` persists catalogs on disk (requires a writable PVC);
   # `memory` keeps catalogs in memory only and ignores existing catalog files on startup.
   store: file
-  # dynamicCatalog.configDir -- Directory on the coordinator where catalog property files are read/written.
-  # Only used when store is `file`.
-  configDir: /etc/trino/dynamic-catalog
   # dynamicCatalog.pruneUpdateInterval -- How frequently dropped catalogs are pruned.
   pruneUpdateInterval: 5s
   persistence:
