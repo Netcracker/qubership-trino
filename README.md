@@ -541,17 +541,35 @@ spec:
           weight: 1
           {{- end }}
     {{- end }}
+```
+
+In `httproute.yaml`, the `BackendTLSPolicy` is for TLS communication between the gateway and the Trino coordinator.
+The custom redirect HTTPRoute is for redirecting HTTP traffic to HTTPS when TLS is enabled on the gateway.
 
 ---
-extrasecrets.yaml, secret-tls.yaml, tls-certificate.yaml, tls-issuer.yaml these files are added to provide complete TLS support and enable integration with cert-manager for secure HTTPS communication.
 
-Added values.schema.json, custom schema that defines the structure, types, and allowed fields for values.yaml, ensuring configurations are valid and consistent. It enables Helm to validate inputs during linting and templating, preventing misconfigurations at deployment time.
+### `extrasecrets.yaml`, `secret-tls.yaml`, `tls-certificate.yaml`, `tls-issuer.yaml`
 
-In httproute.yaml, the `BackendTLSPolicy` is for TLS communication between the gateway and the Trino coordinator.
-Custom HTTPRoute is for redirecting HTTP traffic to HTTPS, if TLS is enabled on the gateway.
+These files are added to provide complete TLS support and enable integration with cert-manager for secure HTTPS communication.
 
-secret-catalog.yaml: 
-Used to securely store Trino catalog configurations (like DB connection properties) using Kubernetes Secrets instead of ConfigMaps.
-It has replaced the community `configmap-catalog.yaml`.
+---
+
+### `secret-catalog.yaml`
+
+Used to securely store Trino catalog configurations (such as database connection properties) using Kubernetes Secrets instead of ConfigMaps. It replaces the community `configmap-catalog.yaml`.
+
+---
+
+### `pvc-dynamic-catalog.yaml`
+
+Added to support experimental [dynamic catalog management](https://trino.io/docs/current/admin/properties-catalog.html). Creates a PersistentVolumeClaim for the coordinator's catalog directory when `dynamicCatalogPVC.enabled: true`, providing the writable storage required by `catalog.store=file` on a read-only root filesystem.
+
+The PVC is intentionally not wired into the coordinator deployment template, keeping the change minimal and close to upstream. Users connect it via `coordinator.additionalVolumes`, `coordinator.additionalVolumeMounts`, `coordinator.additionalConfigFiles`, and `server.coordinatorExtraConfig`. See the [Dynamic Catalogs](docs/public/installation.md#dynamic-catalogs-experimental) section of the installation guide for full configuration details.
+
+---
+
+### `values.schema.json`
+
+Custom schema that defines the structure, types, and allowed fields for `values.yaml`, ensuring configurations are valid and consistent. It enables Helm to validate inputs during linting and templating, preventing misconfigurations at deployment time.
 
 ---
