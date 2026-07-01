@@ -787,7 +787,7 @@ Trino has been configured to redirect all logs, that were previously stored in t
 
 > **Warning**: Dynamic catalog management is an **experimental** Trino feature and should be used with caution in production environments.
 >
-> **Security notice**: `CREATE CATALOG` and `DROP CATALOG` statements are executed as regular SQL queries. This means that **connection credentials supplied in `CREATE CATALOG` statements — including passwords — are visible in plain text in the Trino Web UI query history** and in query logs. Ensure that access to the Trino UI and logs is appropriately restricted before enabling this feature.
+> **Security notice**: `CREATE CATALOG` and `DROP CATALOG` statements are executed as regular SQL queries. This means that **connection credentials supplied in the `CREATE CATALOG` statements, including passwords are visible in plain text in the Trino Web UI query history** and in the query logs. Ensure that access to the Trino UI and logs is appropriately restricted before enabling this feature.
 
 Dynamic catalogs allow catalogs to be created and dropped at runtime via SQL, without restarting Trino or modifying `values.yaml`:
 
@@ -796,17 +796,17 @@ CREATE CATALOG my_catalog USING postgresql WITH ( ... );
 DROP CATALOG my_catalog;
 ```
 
-For full details see the [Trino catalog properties documentation](https://trino.io/docs/current/admin/properties-catalog.html).
+For more information, refer to the _Trino catalog properties documentation_ at [https://trino.io/docs/current/admin/properties-catalog.html](https://trino.io/docs/current/admin/properties-catalog.html).
 
 ### How It Works
 
-When `catalog.store=file` is configured, Trino reads and writes catalog `.properties` files to the coordinator's catalog directory (`/etc/trino/catalog`). Because the coordinator runs with a read-only root filesystem, a PersistentVolumeClaim must be mounted at that path to provide writable storage. The PVC ensures catalog definitions persist across coordinator restarts.
+When `catalog.store=file` is configured, Trino reads and writes catalog `.properties` files to the coordinator's catalog directory (`/etc/trino/catalog`). As the coordinator runs with a read-only root filesystem, a PersistentVolumeClaim must be mounted at that path to provide writable storage. The PVC ensures catalog definitions persist across coordinator restarts.
 
-The Qubership platform chart provides the `dynamicCatalogPVC` parameter group to create this PVC. The remaining wiring — mounting the PVC, registering the catalog directory, and enabling dynamic management — is done via standard chart extension parameters (`coordinator.additionalVolumes`, `coordinator.additionalVolumeMounts`, `coordinator.additionalConfigFiles`, `server.coordinatorExtraConfig`).
+The Qubership platform chart provides the `dynamicCatalogPVC` parameter group to create this PVC. The remaining wiring such as mounting the PVC, registering the catalog directory, and enabling dynamic management — is done via standard chart extension parameters (`coordinator.additionalVolumes`, `coordinator.additionalVolumeMounts`, `coordinator.additionalConfigFiles`, `server.coordinatorExtraConfig`).
 
 ### Enabling Dynamic Catalogs
 
-The following values enable dynamic catalogs with a file-backed PVC.
+The following values enable dynamic catalogs with a file-backed PVC:
 
 ```yaml
 # Null out the default static catalogs so the chart does not mount the catalog
@@ -856,11 +856,11 @@ server:
 
 **Note**: The default `catalogs` values (`tpch`, `tpcds`, `hive`) must be explicitly nulled out as shown above. If any static catalog remains defined, the chart mounts the catalog Secret at `/etc/trino/catalog`, which conflicts with the PVC mount and will prevent the coordinator pod from starting.
 
-**Note**: `server.coordinatorExtraConfig` replaces the chart default entirely (Helm does not merge strings). The default value `http-server.process-forwarded=IGNORE` must be included alongside the dynamic catalog properties as shown above. The same goes for all other properties you want to include in `server.coordinatorExtraConfig`.
+**Note**: `server.coordinatorExtraConfig` replaces the chart default entirely (Helm does not merge strings). The default value `http-server.process-forwarded=IGNORE` must be included alongside the dynamic catalog properties as shown above. The same goes for all other properties that you want to include in `server.coordinatorExtraConfig`.
 
 ### Creating a Catalog at Runtime
 
-Once dynamic catalogs are enabled, use any SQL client connected to Trino to create catalogs. The example below uses DBeaver to add a PostgreSQL catalog with SSL and disabled certificate validation.
+Once dynamic catalogs are enabled, use any SQL client connected to Trino to create the catalogs. The example below uses DBeaver to add a PostgreSQL catalog with SSL and disabled certificate validation.
 
 Connect to Trino in DBeaver and execute:
 
@@ -873,7 +873,7 @@ WITH (
 );
 ```
 
-To verify the catalog was created:
+To verify if the catalog was created:
 
 ```sql
 SHOW CATALOGS;
@@ -885,9 +885,9 @@ To remove a catalog:
 DROP CATALOG my_postgres;
 ```
 
-**Note**: With `catalog.store=file` the catalog definition is written to `/etc/trino/catalog/my_postgres.properties` on the PVC and survives coordinator restarts. With `catalog.store=memory` the catalog exists only for the lifetime of the coordinator process.
+**Note**: With `catalog.store=file`, the catalog definition is written to `/etc/trino/catalog/my_postgres.properties` on the PVC and survives coordinator restarts. With `catalog.store=memory` the catalog exists only until the coordinator process is completed.
 
-**Security reminder**: The `connection-password` value in the `CREATE CATALOG` statement is stored unencrypted in the Trino query history and is visible to anyone with access to the Trino Web UI. Restrict UI access accordingly.
+**Security reminder**: The `connection-password` value in the `CREATE CATALOG` statement is stored unencrypted in the Trino query history and is visible to anyone with access to the Trino Web UI. Restrict the UI access accordingly.
 
 # Installation
 
