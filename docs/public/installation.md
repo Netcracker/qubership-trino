@@ -21,7 +21,8 @@ The following topics are covered in this chapter:
         * [PostgreSQL](#postgresql)
         * [Hive Metastore](#hive-metastore)
   * [HTTPRoute for K8S Gateway API Support](#httproute-for-k8s-gateway-api-support)
-  * [Redirection of Internal Filesystem Stored Logs to stdout](#redirection-of-internal-filesystem-stored-logs-to-stdout)      
+  * [Redirection of Internal Filesystem Stored Logs to stdout](#redirection-of-internal-filesystem-stored-logs-to-stdout)
+  * [Dynamic Catalogs (Experimental)](#dynamic-catalogs-experimental)      
 * [Installation](#installation)
     * [On-Prem](#on-prem)
         * [Manual Deployment](#manual-deployment) 
@@ -278,6 +279,11 @@ The following table lists the configurable parameters of the Trino chart and the
 | `networkPolicy.ingress`                                    |    Additional ingress rules to apply to the Trino pods.                                                                                                                                                                                                                                                                                                                                                                                                                 |`[]`|
 | `networkPolicy.egress`                                    |      Egress rules to apply to the Trino pods.                                                                                                                                                                                                                                                                                                                                                                                                                 |`[]`|
 | `resourceGroups`                                    |                                                                                                                                                                                                                                                                                                                                                                                                                  |`{}`|
+| `dynamicCatalogPVC.enabled`                         | Set to `true` to create a PersistentVolumeClaim for the coordinator's catalog directory, required when using dynamic catalogs with `catalog.store=file`. See [Dynamic Catalogs (Experimental)](#dynamic-catalogs-experimental).                                                                                                                                                                                  | `false`                                              |
+| `dynamicCatalogPVC.storageClass`                    | StorageClass for the PVC (can be templated). Leave empty to use the cluster default.                                                                                                                                                                                                                                                                                                                                                | `""`                                                 |
+| `dynamicCatalogPVC.accessMode`                      | Access mode for the PVC.                                                                                                                                                                                                                                                                                                                                                                                         | `"ReadWriteOnce"`                                    |
+| `dynamicCatalogPVC.size`                            | Storage size for the PVC.                                                                                                                                                                                                                                                                                                                                                                                        | `"1Gi"`                                              |
+| `dynamicCatalogPVC.existingClaim`                   | Name of an existing PVC to use instead of creating a new one.                                                                                                                                                                                                                                                                                                                                                    | `""`                                                 |
 
 An example of `accessControl` configuration is as follows:
 
@@ -777,6 +783,112 @@ Trino has been configured to redirect all logs, that were previously stored in t
    - http-server.log.enabled=false
    - http-server.log.console.enabled=true  
  ```
+## Dynamic Catalogs (Experimental)
+
+> **Warning**: Dynamic catalog management is an **experimental** Trino feature and should be used with caution in production environments.
+>
+> **Security notice**: `CREATE CATALOG` and `DROP CATALOG` statements are executed as regular SQL queries. This means that **connection credentials supplied in the `CREATE CATALOG` statements, including passwords are visible in plain text in the Trino Web UI query history** and in the query logs. Ensure that access to the Trino UI and logs is appropriately restricted before enabling this feature.
+
+Dynamic catalogs allow catalogs to be created and dropped at runtime via SQL, without restarting Trino or modifying `values.yaml`:
+
+```sql
+CREATE CATALOG my_catalog USING postgresql WITH ( ... );
+DROP CATALOG my_catalog;
+```
+
+For more information, refer to the _Trino catalog properties documentation_ at [https://trino.io/docs/current/admin/properties-catalog.html](https://trino.io/docs/current/admin/properties-catalog.html).
+
+### How It Works
+
+When `catalog.store=file` is configured, Trino reads and writes catalog `.properties` files to the coordinator's catalog directory (`/etc/trino/catalog`). As the coordinator runs with a read-only root filesystem, a PersistentVolumeClaim must be mounted at that path to provide writable storage. The PVC ensures catalog definitions persist across coordinator restarts.
+
+The Qubership platform chart provides the `dynamicCatalogPVC` parameter group to create this PVC. The remaining wiring such as mounting the PVC, registering the catalog directory, and enabling dynamic management — is done via standard chart extension parameters (`coordinator.additionalVolumes`, `coordinator.additionalVolumeMounts`, `coordinator.additionalConfigFiles`, `server.coordinatorExtraConfig`).
+
+### Enabling Dynamic Catalogs
+
+The following values enable dynamic catalogs with a file-backed PVC:
+
+```yaml
+# Null out the default static catalogs so the chart does not mount the catalog
+# Secret at /etc/trino/catalog, which would conflict with the PVC mount below.
+# In dynamic mode, catalogs are managed via SQL instead.
+catalogs:
+  tpch: ~
+  tpcds: ~
+  hive: ~
+
+# Create a PVC for the coordinator's catalog directory so catalog definitions
+# persist across coordinator restarts.
+dynamicCatalogPVC:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  storageClass: ""       # leave empty to use the cluster default
+  existingClaim: ""      # set to reuse an existing PVC instead of creating one
+
+coordinator:
+  # Mount the PVC at /etc/trino/catalog so Trino reads and writes catalog files there.
+  additionalVolumes:
+    - name: dynamic-catalog
+      persistentVolumeClaim:
+        claimName: trino-dynamic-catalog   # <release-name>-dynamic-catalog; adjust if your release name differs
+
+  additionalVolumeMounts:
+    - name: dynamic-catalog
+      mountPath: /etc/trino/catalog
+
+  # catalog-store.properties is read by FileCatalogStoreConfig and sets the
+  # directory Trino uses for catalog property files.
+  additionalConfigFiles:
+    catalog-store.properties: |
+      catalog.config-dir=/etc/trino/catalog
+
+server:
+  # catalog.management and catalog.store go into config.properties.
+  # catalog.prune.update-interval controls how often dropped catalogs are cleaned up.
+  # http-server.process-forwarded=IGNORE is the chart default and must be preserved.
+  coordinatorExtraConfig: |
+    http-server.process-forwarded=IGNORE
+    catalog.management=dynamic
+    catalog.store=file
+    catalog.prune.update-interval=5s
+```
+
+**Note**: The default `catalogs` values (`tpch`, `tpcds`, `hive`) must be explicitly nulled out as shown above. If any static catalog remains defined, the chart mounts the catalog Secret at `/etc/trino/catalog`, which conflicts with the PVC mount and will prevent the coordinator pod from starting.
+
+**Note**: `server.coordinatorExtraConfig` replaces the chart default entirely (Helm does not merge strings). The default value `http-server.process-forwarded=IGNORE` must be included alongside the dynamic catalog properties as shown above. The same goes for all other properties that you want to include in `server.coordinatorExtraConfig`.
+
+### Creating a Catalog at Runtime
+
+Once dynamic catalogs are enabled, use any SQL client connected to Trino to create the catalogs. The example below uses DBeaver to add a PostgreSQL catalog with SSL and disabled certificate validation.
+
+Connect to Trino in DBeaver and execute:
+
+```sql
+CREATE CATALOG my_postgres USING postgresql
+WITH (
+  "connection-url" = 'jdbc:postgresql://pg-patroni.postgres-tls:5432/postgres?ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory',
+  "connection-user" = 'postgresuser',
+  "connection-password" = 'postgrespassword'
+);
+```
+
+To verify if the catalog was created:
+
+```sql
+SHOW CATALOGS;
+```
+
+To remove a catalog:
+
+```sql
+DROP CATALOG my_postgres;
+```
+
+**Note**: With `catalog.store=file`, the catalog definition is written to `/etc/trino/catalog/my_postgres.properties` on the PVC and survives coordinator restarts. With `catalog.store=memory` the catalog exists only until the coordinator process is completed.
+
+**Security reminder**: The `connection-password` value in the `CREATE CATALOG` statement is stored unencrypted in the Trino query history and is visible to anyone with access to the Trino Web UI. Restrict the UI access accordingly.
+
 # Installation
 
 The installation process is specified below.

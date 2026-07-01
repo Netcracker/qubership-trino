@@ -504,6 +504,33 @@ additionalCatalogs: {}
 # additionalCatalogs -- Deprecated, use `catalogs` instead. Configure additional
 # [catalogs](https://trino.io/docs/current/installation/deployment.html#catalog-properties).
 
+# Qubership custom change: dynamic catalog support
+# dynamicCatalogPVC -- Creates a PersistentVolumeClaim for the coordinator's catalog directory,
+# required when using experimental dynamic catalog management with file store
+# (https://trino.io/docs/current/admin/properties-catalog.html).
+# Disabled by default. See example-dynamic-catalog.yaml for a full usage example.
+# @raw
+# Example:
+# ```yaml
+# dynamicCatalogPVC:
+#   enabled: true
+#   storageClass: ""
+#   accessMode: ReadWriteOnce
+#   size: 1Gi
+#   existingClaim: ""
+# ```
+dynamicCatalogPVC:
+  # dynamicCatalogPVC.enabled -- Set to true to create the PVC.
+  enabled: false
+  # dynamicCatalogPVC.storageClass -- StorageClass for the PVC (can be templated). Leave empty to use the cluster default.
+  storageClass: ""
+  # dynamicCatalogPVC.accessMode -- Access mode for the PVC.
+  accessMode: ReadWriteOnce
+  # dynamicCatalogPVC.size -- Size of the PVC.
+  size: 1Gi
+  # dynamicCatalogPVC.existingClaim -- Use an existing PVC instead of creating one.
+  existingClaim: ""
+
 env: []
 # env -- additional environment variables added to every pod, specified as a list with explicit values
 # @raw

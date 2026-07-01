@@ -796,6 +796,37 @@
       "default": {},
       "description": "Additional catalogs (deprecated, use catalogs instead)"
     },
+    "dynamicCatalogPVC": {
+      "type": "object",
+      "description": "PVC for the coordinator catalog directory, used with experimental dynamic catalog management",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Set to true to create the PVC"
+        },
+        "storageClass": {
+          "type": "string",
+          "default": "",
+          "description": "StorageClass for the PVC; empty uses the cluster default"
+        },
+        "accessMode": {
+          "type": "string",
+          "default": "ReadWriteOnce",
+          "description": "PVC access mode"
+        },
+        "size": {
+          "type": "string",
+          "default": "1Gi",
+          "description": "Storage size for the PVC"
+        },
+        "existingClaim": {
+          "type": "string",
+          "default": "",
+          "description": "Use an existing PVC name instead of creating one"
+        }
+      }
+    },
     "env": {
       "type": "array",
       "default": [],

@@ -1,0 +1,20 @@
+{{- /* Qubership custom change: dynamic catalog support */ -}}
+{{- if and .Values.dynamicCatalogPVC.enabled (not .Values.dynamicCatalogPVC.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ template "trino.fullname" . }}-dynamic-catalog
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "trino.labels" . | nindent 4 }}
+    app.kubernetes.io/component: coordinator
+spec:
+  accessModes:
+    - {{ .Values.dynamicCatalogPVC.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.dynamicCatalogPVC.size }}
+  {{- if .Values.dynamicCatalogPVC.storageClass }}
+  storageClassName: {{ tpl .Values.dynamicCatalogPVC.storageClass . | quote }}
+  {{- end }}
+{{- end }}
