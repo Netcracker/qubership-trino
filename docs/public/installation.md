@@ -868,8 +868,8 @@ Connect to Trino in DBeaver and execute:
 CREATE CATALOG my_postgres USING postgresql
 WITH (
   "connection-url" = 'jdbc:postgresql://pg-patroni.postgres-tls:5432/postgres?ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory',
-  "connection-user" = 'postgres',
-  "connection-password" = 'password'
+  "connection-user" = 'postgresuser',
+  "connection-password" = 'postgrespassword'
 );
 ```
 
