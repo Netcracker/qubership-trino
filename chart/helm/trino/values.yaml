@@ -522,7 +522,7 @@ additionalCatalogs: {}
 dynamicCatalogPVC:
   # dynamicCatalogPVC.enabled -- Set to true to create the PVC.
   enabled: false
-  # dynamicCatalogPVC.storageClass -- StorageClass for the PVC. Leave empty to use the cluster default.
+  # dynamicCatalogPVC.storageClass -- StorageClass for the PVC (can be templated). Leave empty to use the cluster default.
   storageClass: ""
   # dynamicCatalogPVC.accessMode -- Access mode for the PVC.
   accessMode: ReadWriteOnce

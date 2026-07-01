@@ -15,6 +15,6 @@ spec:
     requests:
       storage: {{ .Values.dynamicCatalogPVC.size }}
   {{- if .Values.dynamicCatalogPVC.storageClass }}
-  storageClassName: {{ .Values.dynamicCatalogPVC.storageClass }}
+  storageClassName: {{ tpl .Values.dynamicCatalogPVC.storageClass . | quote }}
   {{- end }}
 {{- end }}
