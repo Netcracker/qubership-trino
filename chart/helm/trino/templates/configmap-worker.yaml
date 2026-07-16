@@ -20,7 +20,18 @@ data:
   jvm.config: |
     -server
     -agentpath:/usr/lib/trino/bin/libjvmkill.so
+    {{- if .Values.worker.jvm.maxHeapSize }}
     -Xmx{{ .Values.worker.jvm.maxHeapSize }}
+    {{- end }}
+    {{- if .Values.worker.jvm.minHeapSize }}
+    -Xms{{ .Values.worker.jvm.minHeapSize }}
+    {{- end }}
+    {{- if .Values.worker.jvm.maxHeapPercent }}
+    -XX:MaxRAMPercentage={{ .Values.worker.jvm.maxHeapPercent }}
+    {{- end }}
+    {{- if .Values.worker.jvm.initialHeapPercent }}
+    -XX:InitialRAMPercentage={{ .Values.worker.jvm.initialHeapPercent }}
+    {{- end }}
     -XX:+{{ .Values.worker.jvm.gcMethod.type }}
     -XX:G1HeapRegionSize={{ .Values.worker.jvm.gcMethod.g1.heapRegionSize }}
     -XX:+ExplicitGCInvokesConcurrent
@@ -37,7 +48,7 @@ data:
   {{/* only check the version number if the image is not overriden in any way */}}
   {{- with .Values.image -}}
   {{- if and (eq .repository "trinodb/trino") (not .useRepositoryAsSoleImageReference) (not .registry) (not .digest) (gt (default $.Chart.AppVersion .tag | int ) 447 ) }}
-  # https://bugs.openjdk.org/browse/JDK-8329528
+    # https://bugs.openjdk.org/browse/JDK-8329528
     -XX:+UnlockDiagnosticVMOptions
     -XX:G1NumCollectionsKeepPinned=10000000
   {{- end }}{{/* if */}}

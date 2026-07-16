@@ -1,7 +1,7 @@
 {{- if .Values.server.keda.enabled }}
-  {{- if .Values.server.autoscaling.enabled }}
-  {{- fail "The worker Kubernetes Event-driven Autoscaling configuration (`server.keda`) conflicts with the worker Horizontal Pod Autoscaling (`server.autoscaling`). They cannot be both enabled at the same time!" }}
-  {{- end }}
+{{- if .Values.server.autoscaling.enabled }}
+{{- fail "The worker Kubernetes Event-driven Autoscaling configuration (`server.keda`) conflicts with the worker Horizontal Pod Autoscaling (`server.autoscaling`). They cannot be both enabled at the same time!" }}
+{{- end }}
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -35,6 +35,6 @@ spec:
   triggers:
     {{- tpl (toYaml .) $ | nindent 4 }}
   {{- else }}
-  {{- fail "At least one element in `.Values.server.keda.triggers` is required!" }}
+    {{- fail "At least one element in `.Values.server.keda.triggers` is required!" }}
   {{- end }}
-  {{- end }}
+{{- end }}
