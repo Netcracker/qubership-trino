@@ -852,7 +852,6 @@ coordinator:
   #    mountPath: /usr/share/extras
   #    readOnly: true
 
-  priorityClassName: ~
 
   annotations: {}
   # coordinator.annotations -- Annotations to add to the coordinator pod.
@@ -1475,3 +1474,33 @@ networkPolicy:
   #        port: 9999
   # ```
   egress: []
+
+tls:
+  enabled: false
+  secretMounts:
+    name: cert
+    secretName: trino-server-tls-cert
+    path: /etc/trino/certs/
+  generateCerts:
+    enabled: false
+    secretName: trino-cm-tls-cert
+    secretMounts:
+      - mountPath: /home/trino/trustcerts/ca.crt
+        subPath: ca.crt
+      - mountPath: /etc/trino/certs/
+    duration: 365
+    subjectAlternativeName:
+      additionalDnsNames: [ ]
+      additionalIpAddresses: [ ]
+    clusterIssuerName: common-cluster-issuer
+#  certificates:
+#    tls: "tls-combined.pem_value"
+
+### TLS
+#extraSecrets:
+#  mysslcert:
+#    stringData: |
+#      mysslcert.crt: |
+#        -----BEGIN CERTIFICATE-----
+#        certificate content goes here
+#        -----END CERTIFICATE-----  
