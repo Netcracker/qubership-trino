@@ -1026,15 +1026,18 @@
               "description": "JVM max heap size"
             },
             "minHeapSize": {
-              "type": "string",
+              "type": ["string", "null"],
+              "default": null,
               "description": "JVM min heap size"
             },
             "maxHeapPercent": {
-              "type": "integer",
+              "type": ["integer", "null"],
+              "default": null,
               "description": "JVM max heap size as a percentage of container memory"
             },
             "initialHeapPercent": {
-              "type": "integer",
+              "type": ["integer", "null"],
+              "default": null,
               "description": "JVM initial heap size as a percentage of container memory"
             },
             "gcMethod": {
@@ -1269,15 +1272,18 @@
               "description": "JVM max heap size"
             },
             "minHeapSize": {
-              "type": "string",
+              "type": ["string", "null"],
+              "default": null,
               "description": "JVM min heap size"
             },
             "maxHeapPercent": {
-              "type": "integer",
+              "type": ["integer", "null"],
+              "default": null,
               "description": "JVM max heap size as a percentage of container memory"
             },
             "initialHeapPercent": {
-              "type": "integer",
+              "type": ["integer", "null"],
+              "default": null,
               "description": "JVM initial heap size as a percentage of container memory"
             },
             "gcMethod": {
