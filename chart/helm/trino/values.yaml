@@ -499,6 +499,7 @@ catalogs:
 #    connector.name=memory
 #    memory.max-data-per-node=128MB
 # ```
+# Supports templating with `tpl`.
 
 additionalCatalogs: {}
 # additionalCatalogs -- Deprecated, use `catalogs` instead. Configure additional
@@ -700,6 +701,13 @@ coordinator:
 
   jvm:
     maxHeapSize: "1638M"
+    minHeapSize:
+    maxHeapPercent:
+    # coordinator.jvm.maxHeapPercent -- Alternative method of setting heap size as a percentage of container memory limits, which is recommended for better JVM ergonomics. `maxHeapSize` must be unset for this to work.
+    initialHeapPercent:
+    # coordinator.jvm.initialHeapPercent -- sets the starting heap size as a percentage of container memory limits.
+    #
+    # NOTE: to disable dynamic heap resizing when setting the size as a percent, add `-XX:MaxHeapFreeRatio=100` or `-XX:-UseAdaptiveSizePolicy` to `additionalJVMConfig`.
     gcMethod:
       type: "UseG1GC"
       g1:
@@ -767,6 +775,19 @@ coordinator:
   #  successThreshold: 1
   # ```
 
+  startupProbe: {}
+  # coordinator.startupProbe -- [Startup
+  # probe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes)
+  # @raw
+  # Example:
+  # ```yaml
+  #  initialDelaySeconds: 10
+  #  periodSeconds: 2
+  #  timeoutSeconds: 2
+  #  failureThreshold: 60
+  #  successThreshold: 1
+  # ```
+
   lifecycle: {}
   # coordinator.lifecycle -- Coordinator container [lifecycle
   # events](https://kubernetes.io/docs/tasks/configure-pod-container/attach-handler-lifecycle-event/)
@@ -830,6 +851,7 @@ coordinator:
   #  - name: extras
   #    mountPath: /usr/share/extras
   #    readOnly: true
+
 
   annotations: {}
   # coordinator.annotations -- Annotations to add to the coordinator pod.
@@ -896,6 +918,13 @@ worker:
 
   jvm:
     maxHeapSize: "2457M"
+    minHeapSize:
+    maxHeapPercent:
+    # jvm.maxHeapPercent -- Alternative method of setting heap size as a percentage of container memory limits, which is recommended for better JVM ergonomics. `maxHeapSize` must be unset for this to work.
+    initialHeapPercent:
+    # jvm.initialHeapPercent -- sets the starting heap size as a percentage of container memory limits.
+    #
+    # NOTE: to disable dynamic heap resizing when setting the size as a percent, add `-XX:MaxHeapFreeRatio=100` or `-XX:-UseAdaptiveSizePolicy` to `additionalJVMConfig`.
     gcMethod:
       type: "UseG1GC"
       g1:
@@ -952,6 +981,19 @@ worker:
   #  periodSeconds: 10
   #  timeoutSeconds: 5
   #  failureThreshold: 6
+  #  successThreshold: 1
+  # ```
+
+  startupProbe: {}
+  # worker.startupProbe -- [Startup
+  # probe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes)
+  # @raw
+  # Example:
+  # ```yaml
+  #  initialDelaySeconds: 10
+  #  periodSeconds: 2
+  #  timeoutSeconds: 2
+  #  failureThreshold: 60
   #  successThreshold: 1
   # ```
 
@@ -1461,4 +1503,4 @@ tls:
 #      mysslcert.crt: |
 #        -----BEGIN CERTIFICATE-----
 #        certificate content goes here
-#        -----END CERTIFICATE-----
+#        -----END CERTIFICATE-----  
