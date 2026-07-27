@@ -1,9 +1,3 @@
-FROM alpine:latest AS unpacker
-ENV MAVEN_REPO=https://repo1.maven.org/maven2
-
-
-RUN apk add --no-cache curl
-    
 FROM trinodb/trino:483
 
 USER root
