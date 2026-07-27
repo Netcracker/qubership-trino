@@ -1025,6 +1025,21 @@
               "default": "1638M",
               "description": "JVM max heap size"
             },
+            "minHeapSize": {
+              "type": "integer",
+              "default": 0,
+              "description": "JVM min heap size"
+            },
+            "maxHeapPercent": {
+              "type": "integer",
+              "default": 0,
+              "description": "JVM max heap size as a percentage of container memory"
+            },
+            "initialHeapPercent": {
+              "type": "integer",
+              "default": 0,
+              "description": "JVM initial heap size as a percentage of container memory"
+            },
             "gcMethod": {
               "type": "object",
               "properties": {
@@ -1115,6 +1130,11 @@
           "type": "object",
           "default": {},
           "description": "Readiness probe configuration"
+        },
+        "startupProbe": {
+          "type": "object",
+          "default": {},
+          "description": "Startup probe configuration"
         },
         "lifecycle": {
           "type": "object",
@@ -1251,6 +1271,21 @@
               "default": "2457M",
               "description": "JVM max heap size"
             },
+            "minHeapSize": {
+              "type": "integer",
+              "default": 0,
+              "description": "JVM min heap size"
+            },
+            "maxHeapPercent": {
+              "type": "integer",
+              "default": 0,
+              "description": "JVM max heap size as a percentage of container memory"
+            },
+            "initialHeapPercent": {
+              "type": "integer",
+              "default": 0,
+              "description": "JVM initial heap size as a percentage of container memory"
+            },
             "gcMethod": {
               "type": "object",
               "properties": {
@@ -1331,6 +1366,11 @@
           "type": "object",
           "default": {},
           "description": "Readiness probe configuration"
+        },
+        "startupProbe": {
+          "type": "object",
+          "default": {},
+          "description": "Startup probe configuration"
         },
         "lifecycle": {
           "type": "object",
