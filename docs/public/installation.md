@@ -872,9 +872,9 @@ server:
 
 **Note**: `server.coordinatorExtraConfig` replaces the chart default entirely (Helm does not merge strings). The default value `http-server.process-forwarded=IGNORE` must be included alongside the dynamic catalog properties as shown above. The same goes for all other properties that you want to include in `server.coordinatorExtraConfig`.
 
-**Note**: `server.workerExtraConfig` must also set `catalog.management=dynamic`. Without it, queries against a dynamically created catalog fail once the coordinator dispatches a task to a worker, with `io.trino.connector.StaticCatalogManager` reporting the catalog as missing. Workers don't need the PVC or any volume mounts — only this config property.
+**Note**: The `server.workerExtraConfig` must include `catalog.management=dynamic`. If this setting is omitted, queries that rely on a dynamically created catalog will fail after the coordinator assigns a task to a worker, because the worker's `StaticCatalogManager` cannot locate the catalog. Workers do not require the PVC or any volume mounts; only this configuration is necessary.
 
-**Note**: `coordinator.deployment.strategy.type` must be `Recreate`, as shown above. The chart's default `RollingUpdate` strategy starts the replacement coordinator pod before the old one terminates, and with a single-replica coordinator, both pods then try to mount the same `ReadWriteOnce` `dynamicCatalogPVC` at once. This fails with a `Volume is already in use` or `Multi-Attach error`, and the upgrade stalls because the new pod never becomes ready. If your cluster's storage class supports `ReadWriteMany`, you can set `dynamicCatalogPVC.accessMode: ReadWriteMany` instead and keep `RollingUpdate`.
+**Note**: The coordinator's deployment strategy must be set to `Recreate` (as shown above). The chart’s default strategy, `RollingUpdate`, creates the new coordinator pod before terminating the old one. With a single‑replica coordinator, both pods attempt to mount the same `ReadWriteOnce` `dynamicCatalogPVC` simultaneously, resulting in “Volume is already in use” or “Multi‑Attach” errors and preventing the new pod from becoming ready. If your storage class supports `ReadWriteMany`, you can change `dynamicCatalogPVC.accessMode` to `ReadWriteMany` and retain the `RollingUpdate` strategy.
 
 ### Creating a Catalog at Runtime
 
