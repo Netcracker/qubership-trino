@@ -874,7 +874,7 @@ server:
 
 **Note**: The `server.workerExtraConfig` must include `catalog.management=dynamic`. If this setting is omitted, queries that rely on a dynamically created catalog will fail after the coordinator assigns a task to a worker, because the worker's `StaticCatalogManager` cannot locate the catalog. Workers do not require the PVC or any volume mounts; only this configuration is necessary.
 
-**Note**: The coordinator's deployment strategy must be set to `Recreate` (as shown above). The chart’s default strategy, `RollingUpdate`, creates the new coordinator pod before terminating the old one. With a single‑replica coordinator, both pods attempt to mount the same `ReadWriteOnce` `dynamicCatalogPVC` simultaneously, resulting in “Volume is already in use” or “Multi‑Attach” errors and preventing the new pod from becoming ready. If your storage class supports `ReadWriteMany`, you can change `dynamicCatalogPVC.accessMode` to `ReadWriteMany` and retain the `RollingUpdate` strategy.
+**Note**: The `coordinator.deployment.strategy.type` must be set to `Recreate` (as shown above). The chart’s default strategy, `RollingUpdate`, creates the new coordinator pod before terminating the old one. With a single‑replica coordinator, both pods attempt to mount the same `ReadWriteOnce` `dynamicCatalogPVC` simultaneously, resulting in “Volume is already in use” or “Multi‑Attach” errors and preventing the new pod from becoming ready. If your storage class supports `ReadWriteMany`, you can change `dynamicCatalogPVC.accessMode` to `ReadWriteMany` and retain the `RollingUpdate` strategy.
 
 ### Creating a Catalog at Runtime
 
