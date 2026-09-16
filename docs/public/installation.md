@@ -827,6 +827,14 @@ dynamicCatalogPVC:
   existingClaim: ""      # set to reuse an existing PVC instead of creating one
 
 coordinator:
+  deployment:
+    # The coordinator Deployment runs a single replica. With the default RollingUpdate
+    # strategy, Kubernetes starts the new coordinator pod before removing the old one, and
+    # both try to mount the ReadWriteOnce dynamicCatalogPVC at once. Recreate avoids this by
+    # terminating the old pod first.
+    strategy:
+      type: Recreate
+
   # Mount the PVC at /etc/trino/catalog so Trino reads and writes catalog files there.
   additionalVolumes:
     - name: dynamic-catalog
@@ -852,11 +860,21 @@ server:
     catalog.management=dynamic
     catalog.store=file
     catalog.prune.update-interval=5s
+
+  # Workers don't read catalog.store themselves; they accept catalog properties pushed from
+  # the coordinator when it dispatches a task, and only do so if catalog.management=dynamic
+  # is set here too.
+  workerExtraConfig: |
+    catalog.management=dynamic
 ```
 
 **Note**: The default `catalogs` values (`tpch`, `tpcds`, `hive`) must be explicitly nulled out as shown above. If any static catalog remains defined, the chart mounts the catalog Secret at `/etc/trino/catalog`, which conflicts with the PVC mount and will prevent the coordinator pod from starting.
 
 **Note**: `server.coordinatorExtraConfig` replaces the chart default entirely (Helm does not merge strings). The default value `http-server.process-forwarded=IGNORE` must be included alongside the dynamic catalog properties as shown above. The same goes for all other properties that you want to include in `server.coordinatorExtraConfig`.
+
+**Note**: The `server.workerExtraConfig` must include `catalog.management=dynamic`. If this setting is omitted, queries that rely on a dynamically created catalog will fail after the coordinator assigns a task to a worker, because the worker's `StaticCatalogManager` cannot locate the catalog. Workers do not require the PVC or any volume mounts; only this configuration is necessary.
+
+**Note**: The `coordinator.deployment.strategy.type` must be set to `Recreate` (as shown above). The chart’s default strategy, `RollingUpdate`, creates the new coordinator pod before terminating the old one. With a single‑replica coordinator, both pods attempt to mount the same `ReadWriteOnce` `dynamicCatalogPVC` simultaneously, resulting in “Volume is already in use” or “Multi‑Attach” errors and preventing the new pod from becoming ready. If your storage class supports `ReadWriteMany`, you can change `dynamicCatalogPVC.accessMode` to `ReadWriteMany` and retain the `RollingUpdate` strategy.
 
 ### Creating a Catalog at Runtime
 
