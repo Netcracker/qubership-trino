@@ -5,6 +5,13 @@ on:
   push:
     branches:
       - '**'
+  workflow_dispatch:
+    inputs:
+      publish_docker:
+        description: "Publish image to ghcr.io"
+        type: boolean
+        default: true
+        required: false
 env:
   TAG_NAME: ${{ github.event.release.tag_name || github.ref }}
 
