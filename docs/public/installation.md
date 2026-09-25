@@ -832,8 +832,14 @@ coordinator:
     # strategy, Kubernetes starts the new coordinator pod before removing the old one, and
     # both try to mount the ReadWriteOnce dynamicCatalogPVC at once. Recreate avoids this by
     # terminating the old pod first.
+    #
+    # rollingUpdate must be nulled out too: the chart default sets it alongside
+    # type: RollingUpdate, and Helm merges maps rather than replacing them, so it survives
+    # unless cleared. Kubernetes rejects a Deployment that sets rollingUpdate while
+    # type is Recreate.
     strategy:
       type: Recreate
+      rollingUpdate: ~
 
   # Mount the PVC at /etc/trino/catalog so Trino reads and writes catalog files there.
   additionalVolumes:
@@ -874,7 +880,9 @@ server:
 
 **Note**: The `server.workerExtraConfig` must include `catalog.management=dynamic`. If this setting is omitted, queries that rely on a dynamically created catalog will fail after the coordinator assigns a task to a worker, because the worker's `StaticCatalogManager` cannot locate the catalog. Workers do not require the PVC or any volume mounts; only this configuration is necessary.
 
-**Note**: The `coordinator.deployment.strategy.type` must be set to `Recreate` (as shown above). The chart’s default strategy, `RollingUpdate`, creates the new coordinator pod before terminating the old one. With a single‑replica coordinator, both pods attempt to mount the same `ReadWriteOnce` `dynamicCatalogPVC` simultaneously, resulting in “Volume is already in use” or “Multi‑Attach” errors and preventing the new pod from becoming ready. If your storage class supports `ReadWriteMany`, you can change `dynamicCatalogPVC.accessMode` to `ReadWriteMany` and retain the `RollingUpdate` strategy.
+**Note**: The `coordinator.deployment.strategy.type` must be set to `Recreate` (as shown above). The chart's default strategy, `RollingUpdate`, creates the new coordinator pod before terminating the old one. With a single-replica coordinator, both pods attempt to mount the same `ReadWriteOnce` `dynamicCatalogPVC` simultaneously, resulting in "Volume is already in use" or "Multi-Attach" errors and preventing the new pod from becoming ready. If your storage class supports `ReadWriteMany`, you can change `dynamicCatalogPVC.accessMode` to `ReadWriteMany` and retain the `RollingUpdate` strategy.
+
+**Note**: `coordinator.deployment.strategy.rollingUpdate` must be nulled out alongside `type: Recreate`, as shown above. The chart's default `values.yaml` sets `rollingUpdate` alongside `type: RollingUpdate`, and Helm merges override maps into chart defaults instead of replacing them. Setting only `type: Recreate` leaves the default `rollingUpdate` block in place, and the Kubernetes API then rejects the Deployment with `spec.strategy.rollingUpdate: Forbidden: may not be specified when strategy type is 'Recreate'`.
 
 ### Creating a Catalog at Runtime
 
