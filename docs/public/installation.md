@@ -920,7 +920,7 @@ DROP CATALOG my_postgres;
 
 The Hive connector can read and write tables whose locations are `seaweedfs://` paths, for example when the Hive Metastore warehouse is stored in SeaweedFS. Trino's native S3 file system support cannot open `seaweedfs://` locations, so the catalog uses the Hadoop file system support (`fs.hadoop.enabled=true`) with the SeaweedFS Hadoop client. A catalog can use only one file system support, so this catalog cannot also use `fs.native-s3.enabled`.
 
-The Trino image includes the `seaweedfs-hadoop3-client` jar in the `hdfs/` directory of the `hive`, `iceberg`, `delta-lake`, `hudi`, and `lakehouse` plugins. The Hive Metastore must also support SeaweedFS, like Qubership Hive Metastore image does.
+The Qubership Trino image includes the `seaweedfs-hadoop3-client` jar in the `hdfs/` directory of the `hive`, `iceberg`, `delta-lake`, `hudi`, and `lakehouse` plugins. The Hive Metastore must also support SeaweedFS, like Qubership Hive Metastore image does.
 
 The jar does not register the `seaweedfs` scheme with Hadoop, so the scheme must be defined in a `core-site.xml` file that is available on the coordinator and on every worker. The filer host and port are not configured in Trino. The client takes them from the `seaweedfs://<host>:<port>/...` table and schema locations stored in the Hive Metastore, for example from its `s3.warehouseDir` value (`metastore.warehouse.dir`) or an explicit location. The gRPC port defaults to the filer port plus 10000.
 
