@@ -23,6 +23,7 @@ The following topics are covered in this chapter:
   * [HTTPRoute for K8S Gateway API Support](#httproute-for-k8s-gateway-api-support)
   * [Redirection of Internal Filesystem Stored Logs to stdout](#redirection-of-internal-filesystem-stored-logs-to-stdout)
   * [Dynamic Catalogs (Experimental)](#dynamic-catalogs-experimental)      
+  * [Using SeaweedFS with the Hive Connector](#using-seaweedfs-with-the-hive-connector)
 * [Installation](#installation)
     * [On-Prem](#on-prem)
         * [Manual Deployment](#manual-deployment) 
@@ -914,6 +915,75 @@ DROP CATALOG my_postgres;
 **Note**: With `catalog.store=file`, the catalog definition is written to `/etc/trino/catalog/my_postgres.properties` on the PVC and survives coordinator restarts. With `catalog.store=memory` the catalog exists only until the coordinator process is completed.
 
 **Security reminder**: The `connection-password` value in the `CREATE CATALOG` statement is stored unencrypted in the Trino query history and is visible to anyone with access to the Trino Web UI. Restrict the UI access accordingly.
+
+## Using SeaweedFS with the Hive Connector
+
+The Hive connector can read and write tables whose locations are `seaweedfs://` paths, for example when the Hive Metastore warehouse is stored in SeaweedFS. Trino's native S3 file system support cannot open `seaweedfs://` locations, so the catalog uses the Hadoop file system support (`fs.hadoop.enabled=true`) with the SeaweedFS Hadoop client. A catalog can use only one file system support, so this catalog cannot also use `fs.native-s3.enabled`.
+
+The Qubership Trino image includes the `seaweedfs-hadoop3-client` jar in the `hdfs/` directory of the `hive`, `iceberg`, `delta-lake`, `hudi`, and `lakehouse` plugins. The Hive Metastore must also support SeaweedFS, like Qubership Hive Metastore image does.
+
+The jar does not register the `seaweedfs` scheme with Hadoop, so the scheme must be defined in a `core-site.xml` file that is available on the coordinator and on every worker. The filer host and port are not configured in Trino. The client takes them from the `seaweedfs://<host>:<port>/...` table and schema locations stored in the Hive Metastore, for example from its `s3.warehouseDir` value (`metastore.warehouse.dir`) or an explicit location. The gRPC port defaults to the filer port plus 10000.
+
+Parameters example:
+
+```yaml
+coordinator:
+  additionalConfigFiles:
+    catalog-store.properties: | # required for dynamic catalogs
+      catalog.config-dir=/etc/trino/catalog
+    core-site.xml: |
+      <configuration>
+        <property><name>fs.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedFileSystem</value></property>
+        <property><name>fs.AbstractFileSystem.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedAbstractFileSystem</value></property>
+      </configuration>
+worker:
+  additionalConfigFiles:
+    core-site.xml: |
+      <configuration>
+        <property><name>fs.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedFileSystem</value></property>
+        <property><name>fs.AbstractFileSystem.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedAbstractFileSystem</value></property>
+      </configuration>
+```
+
+To create the catalog:
+
+```sql
+CREATE CATALOG hive_seaweedfs USING hive
+WITH (
+  "hive.metastore.uri" = 'thrift://hive-metastore.hive-metastore:9083',
+  "fs.hadoop.enabled" = 'true',
+  "hive.config.resources" = '/etc/trino/core-site.xml',
+  "hive.non-managed-table-writes-enabled" = 'true'
+);
+```
+
+Hive Metastore 4 converts tables created by Trino to external tables, and Trino rejects writes to them with `Cannot write to non-managed Hive table` unless `hive.non-managed-table-writes-enabled` is `true`.
+
+By default, a schema is created under the Hive Metastore warehouse directory, and its tables are created under the schema. To store a schema or a table at an explicit location, set the `location` schema property or the `external_location` table property to a `seaweedfs://` URI:
+
+```sql
+CREATE SCHEMA hive_seaweedfs.custom_schema
+WITH (location = 'seaweedfs://seaweedfs-filer.seaweedfs:8888/custom/custom_schema');
+
+CREATE TABLE hive_seaweedfs.custom_schema.external_table (id integer, name varchar)
+WITH (
+  external_location = 'seaweedfs://seaweedfs-filer.seaweedfs:8888/custom/external_table_data',
+  format = 'PARQUET'
+);
+```
+
+Tables created in a schema with an explicit `location` are stored under that location. Writing to a table with `external_location` also requires `hive.non-managed-table-writes-enabled` to be `true`.
+
+To check the setup, create a schema and a table, and write to it:
+
+```sql
+CREATE SCHEMA hive_seaweedfs.test_schema;
+CREATE TABLE hive_seaweedfs.test_schema.test_table (id integer, name varchar);
+INSERT INTO hive_seaweedfs.test_schema.test_table VALUES (1, 'trino'), (2, 'seaweedfs');
+SELECT * FROM hive_seaweedfs.test_schema.test_table;
+```
+
+**Note**: The Trino coordinator and workers must reach the SeaweedFS filer over HTTP (port `8888` by default) and gRPC (port `18888` by default). This configuration works with a filer without authentication. For an authenticated filer, the SeaweedFS client reads its settings from a `security.toml` file, which must be mounted into the coordinator and worker pods.
 
 # Installation
 
