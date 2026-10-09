@@ -918,11 +918,11 @@ DROP CATALOG my_postgres;
 
 ## Using SeaweedFS with the Hive Connector
 
-The Hive connector can read and write tables whose locations are `seaweedfs://` paths, for example when the Hive Metastore warehouse is stored in SeaweedFS. Trino's native S3 file system support cannot open `seaweedfs://` locations, so the catalog uses the Hadoop file system support (`fs.hadoop.enabled=true`) with the SeaweedFS Hadoop client. A catalog can use only one file system support, so this catalog cannot also use `fs.native-s3.enabled`.
+The Hive connector can read and write tables whose locations use the `seaweedfs://` scheme—e.g., when the Hive Metastore warehouse is stored in SeaweedFS. Trino's native S3 file‑system support cannot open `seaweedfs://` locations, so this catalog relies on Hadoop file‑system support (`fs.hadoop.enabled=true`) together with the SeaweedFS Hadoop client. Because a catalog can employ only a single file‑system implementation, it cannot also enable `fs.native-s3.enabled`.
 
-The Qubership Trino image includes the `seaweedfs-hadoop3-client` jar in the `hdfs/` directory of the `hive`, `iceberg`, `delta-lake`, `hudi`, and `lakehouse` plugins. The Hive Metastore must also support SeaweedFS, like Qubership Hive Metastore image does.
+The Qubership Trino image bundles the `seaweedfs-hadoop3-client` JAR in the `hdfs/` directories of the `hive`, `iceberg`, `delta-lake`, `hudi`, and `lakehouse` plugins. The Hive Metastore must also support SeaweedFS, as provided by the Qubership Hive Metastore image.
 
-The jar does not register the `seaweedfs` scheme with Hadoop, so the scheme must be defined in a `core-site.xml` file that is available on the coordinator and on every worker. The filer host and port are not configured in Trino. The client takes them from the `seaweedfs://<host>:<port>/...` table and schema locations stored in the Hive Metastore, for example from its `s3.warehouseDir` value (`metastore.warehouse.dir`) or an explicit location. The gRPC port defaults to the filer port plus 10000.
+The JAR does not automatically register the `seaweedfs` scheme with Hadoop, so you must define the scheme in a `core-site.xml` file that is present on the coordinator and on every worker. The filer host and port are not configured in Trino; the client derives them from the `seaweedfs://<host>:<port>/…` table and schema locations stored in the Hive Metastore (for example, from its `s3.warehouseDir` value `metastore.warehouse.dir` or an explicit location). The gRPC port defaults to the filer port plus 10,000.
 
 Parameters example:
 
@@ -957,7 +957,7 @@ WITH (
 );
 ```
 
-Hive Metastore 4 converts tables created by Trino to external tables, and Trino rejects writes to them with `Cannot write to non-managed Hive table` unless `hive.non-managed-table-writes-enabled` is `true`.
+ Hive Metastore version 4 converts tables created by Trino into external tables. Trino rejects writes to such tables with the error `Cannot write to non-managed Hive table` unless the property `hive.non-managed-table-writes-enabled` is set to `'true'`.
 
 By default, a schema is created under the Hive Metastore warehouse directory, and its tables are created under the schema. To store a schema or a table at an explicit location, set the `location` schema property or the `external_location` table property to a `seaweedfs://` URI:
 
