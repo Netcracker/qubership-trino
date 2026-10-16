@@ -9,9 +9,24 @@ RUN apk add --no-cache curl && \
     mkdir -p /opt/seaweedfs && \
     curl -k -L $MAVEN_REPO/com/seaweedfs/seaweedfs-hadoop3-client/$SEAWEEDFS_VERSION/seaweedfs-hadoop3-client-$SEAWEEDFS_VERSION.jar --output /opt/seaweedfs/seaweedfs-hadoop3-client-$SEAWEEDFS_VERSION.jar
 
+# The Trino image has no package manager, so take just the files of the nss_wrapper-libs package
+# from UBI, with the same paths. The entrypoint uses the library to fake a passwd entry when the
+# container runs with an arbitrary UID (for example, in OpenShift). Hadoop fails to log in without
+# a passwd entry for the UID. The library depends only on libc, which is already present in the Trino image.
+FROM redhat/ubi10:latest AS nss-wrapper
+
+# --no-recursion keeps tar from adding the whole content of directories shared with other packages.
+RUN \
+    set -xeuo pipefail && \
+    dnf install --setopt install_weak_deps=false -y nss_wrapper-libs && \
+    mkdir -p /rootfs && \
+    rpm -ql nss_wrapper-libs | tar --no-recursion -cf - -T - | tar -xf - -C /rootfs
+
 FROM trinodb/trino:483
 
 USER root
+
+COPY --from=nss-wrapper /rootfs/ /
 
 # The SeaweedFS jar is copied once into the hive plugin and symlinked from the other plugins to save image size.
 ARG SEAWEEDFS_VERSION
