@@ -18,7 +18,7 @@ FROM redhat/ubi10:latest AS nss-wrapper
 # --no-recursion keeps tar from adding the whole content of directories shared with other packages.
 RUN \
     set -xeuo pipefail && \
-    dnf install --setopt install_weak_deps=false --nodocs -y nss_wrapper-libs && \
+    dnf install --setopt install_weak_deps=false -y nss_wrapper-libs && \
     mkdir -p /rootfs && \
     rpm -ql nss_wrapper-libs | tar --no-recursion -cf - -T - | tar -xf - -C /rootfs
 
