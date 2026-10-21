@@ -1,13 +1,35 @@
 ARG SEAWEEDFS_VERSION=4.38
+ARG JACKSON_VERSION=2.22.4
 
 FROM alpine:latest AS unpacker
 
 ARG SEAWEEDFS_VERSION
+ARG JACKSON_VERSION
 ENV MAVEN_REPO=https://repo1.maven.org/maven2
 
 RUN apk add --no-cache curl && \
     mkdir -p /opt/seaweedfs && \
     curl -k -L $MAVEN_REPO/com/seaweedfs/seaweedfs-hadoop3-client/$SEAWEEDFS_VERSION/seaweedfs-hadoop3-client-$SEAWEEDFS_VERSION.jar --output /opt/seaweedfs/seaweedfs-hadoop3-client-$SEAWEEDFS_VERSION.jar
+
+# Patched Jackson jars (CVE-2026-110879, CVE-2026-104895), named like the ones in /usr/lib/trino/lib.
+RUN mkdir -p /opt/jackson && \
+    for coords in \
+        core:jackson-core \
+        core:jackson-databind \
+        dataformat:jackson-dataformat-smile \
+        datatype:jackson-datatype-guava \
+        datatype:jackson-datatype-jdk8 \
+        datatype:jackson-datatype-joda \
+        datatype:jackson-datatype-jsr310 \
+        module:jackson-module-blackbird \
+        module:jackson-module-parameter-names \
+        jakarta.rs:jackson-jakarta-rs-base \
+        jakarta.rs:jackson-jakarta-rs-json-provider; do \
+        group=com.fasterxml.jackson.${coords%%:*}; \
+        artifact=${coords#*:}; \
+        curl -fsSL $MAVEN_REPO/$(echo $group | tr . /)/$artifact/$JACKSON_VERSION/$artifact-$JACKSON_VERSION.jar \
+            --output /opt/jackson/${group}_$artifact-$JACKSON_VERSION.jar || exit 1; \
+    done
 
 # The Trino image has no package manager, so take just the files of the nss_wrapper-libs package
 # from UBI, with the same paths. The entrypoint uses the library to fake a passwd entry when the
@@ -38,6 +60,11 @@ RUN for plugin in iceberg delta-lake hudi lakehouse; do \
         test -f /usr/lib/trino/plugin/${plugin}/hdfs/seaweedfs-hadoop3-client-${SEAWEEDFS_VERSION}.jar \
         || exit 1; \
     done
+
+# Replace the vulnerable Jackson 2.22.3 jars.
+ARG JACKSON_VERSION
+COPY --from=unpacker --chmod=0644 /opt/jackson/ /usr/lib/trino/lib/
+RUN rm -f /usr/lib/trino/lib/*jackson*-2.22.3.jar
 
 ENV TRUST_CERTS_DIR=/home/trino/trustcerts
 COPY docker/entrypoint.sh /opt/entrypoint.sh
