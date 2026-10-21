@@ -1,4 +1,5 @@
-{{- $workerJmx := merge .Values.jmx.worker (omit .Values.jmx "coordinator" "worker") -}}
+{{- $workerJmx := include "trino.roleConfig" (dict "block" .Values.jmx "role" "worker") | fromYaml -}}
+{{- $workerAccessControl := include "trino.workerAccessControl" . | fromYaml -}}
 {{- if or .Values.server.keda.enabled (gt (int .Values.server.workers) 0) }}
 apiVersion: v1
 kind: ConfigMap
@@ -13,8 +14,11 @@ data:
     node.environment={{ tpl .Values.server.node.environment . }}
     node.data-dir={{ .Values.server.node.dataDir }}
     plugin.dir={{ .Values.server.node.pluginDir }}
+    node.id=${ENV:HOSTNAME}
   {{- range $configValue := .Values.additionalNodeProperties }}
-    {{ $configValue }}
+  {{- with tpl $configValue $ }}
+    {{ . }}
+  {{- end }}
   {{- end }}
 
   jvm.config: |
@@ -47,7 +51,7 @@ data:
     -XX:+EnableDynamicAgentLoading
   {{/* only check the version number if the image is not overriden in any way */}}
   {{- with .Values.image -}}
-  {{- if and (eq .repository "trinodb/trino") (not .useRepositoryAsSoleImageReference) (not .registry) (not .digest) (gt (default $.Chart.AppVersion .tag | int ) 447 ) }}
+  {{- if and (eq .repository "trinodb/trino") (not .useRepositoryAsSoleImageReference) (not .registry) (not .digest) (gt (default $.Chart.AppVersion .tag | toString | regexFind "^[0-9]+" | int) 447) }}
     # https://bugs.openjdk.org/browse/JDK-8329528
     -XX:+UnlockDiagnosticVMOptions
     -XX:G1NumCollectionsKeepPinned=10000000
@@ -70,7 +74,9 @@ data:
     {{- end }}
     discovery.uri=http://{{ template "trino.fullname" . }}:{{ .Values.service.port }}
     {{- range $configValue := .Values.additionalConfigProperties }}
-    {{ $configValue }}
+    {{- with tpl $configValue $ }}
+    {{ . }}
+    {{- end }}
     {{- end }}
     {{- if .Values.server.config.https.enabled }}
       http-server.https.enabled=true
@@ -88,10 +94,27 @@ data:
     {{- .Values.server.workerExtraConfig | nindent 4 }}
     {{- end }}
 
-{{- if .Values.worker.gracefulShutdown.enabled }}
+{{- if $workerAccessControl }}
+  {{- if eq (include "trino.configType" $workerAccessControl) "configmap" }}
   access-control.properties: |
     access-control.name=file
-    security.config-file={{ .Values.server.config.path }}/access-control/graceful-shutdown-rules.json
+    {{- if $workerAccessControl.refreshPeriod }}
+    security.refresh-period={{ $workerAccessControl.refreshPeriod }}
+    {{- end }}
+    security.config-file={{ .Values.server.config.path }}/access-control/{{ $workerAccessControl.configFile | default "rules.json" }}
+  {{- else if eq (include "trino.configType" $workerAccessControl) "properties" }}
+  {{- if .Values.worker.gracefulShutdown.enabled }}
+  {{- fail "The shutdown request is only permitted by the file based access control, which the chart cannot merge into `accessControl.properties`. Either set `accessControl.worker.type` to 'configmap' and provide the worker rules in `accessControl.worker.rules`, or disable `worker.gracefulShutdown` and apply the related configurations manually." }}
+  {{- end }}
+  access-control.properties: |
+    {{- if $workerAccessControl.properties }}
+    {{- $workerAccessControl.properties | nindent 4 }}
+    {{- else}}
+    {{- fail "accessControl.properties is required when accessControl.type is 'properties'." }}
+    {{- end }}
+  {{- else}}
+  {{- fail "Invalid accessControl.type value. It must be either 'configmap' or 'properties'." }}
+  {{- end }}
 {{- end }}
 
 {{- if .Values.server.exchangeManager }}
@@ -99,20 +122,34 @@ data:
     exchange-manager.name={{ .Values.server.exchangeManager.name }}
     exchange.base-directories={{ join "," .Values.server.exchangeManager.baseDir }}
   {{- range $configValue := .Values.additionalExchangeManagerProperties }}
-    {{ $configValue }}
+  {{- with tpl $configValue $ }}
+    {{ . }}
+  {{- end }}
   {{- end }}
 {{- end }}
 
   log.properties: |
     io.trino={{ .Values.server.log.trino.level }}
   {{- range $configValue := .Values.additionalLogProperties }}
-    {{ $configValue }}
+  {{- with tpl $configValue $ }}
+    {{ . }}
+  {{- end }}
   {{- end }}
 
-{{ if .Values.eventListenerProperties }}
+{{/* An event listener has to declare event-listener.name, so unlike the other
+     property lists this one is rendered before the file is opened: writing the
+     file with nothing in it stops the server from starting, while leaving it
+     out is what a false condition is asking for. */ -}}
+{{ $eventListenerProperties := list -}}
+{{ range $configValue := .Values.eventListenerProperties -}}
+{{ with tpl $configValue $ -}}
+{{ $eventListenerProperties = append $eventListenerProperties . -}}
+{{ end -}}
+{{ end -}}
+{{ if $eventListenerProperties }}
   event-listener.properties: |
-  {{- range $configValue := .Values.eventListenerProperties }}
-    {{ $configValue }}
+  {{- range $eventListenerProperties }}
+    {{ . }}
   {{- end }}
 {{ end }}
 

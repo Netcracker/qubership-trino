@@ -22,7 +22,7 @@ RUN \
     mkdir -p /rootfs && \
     rpm -ql nss_wrapper-libs | tar --no-recursion -cf - -T - | tar -xf - -C /rootfs
 
-FROM trinodb/trino:483
+FROM trinodb/trino:484
 
 USER root
 

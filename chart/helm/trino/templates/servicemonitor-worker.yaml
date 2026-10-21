@@ -1,4 +1,8 @@
-{{- $workerServiceMonitor := merge .Values.serviceMonitor.worker (omit .Values.serviceMonitor "coordinator" "worker") -}}
+{{- $workerServiceMonitor := include "trino.roleConfig" (dict "block" .Values.serviceMonitor "role" "worker") | fromYaml -}}
+{{- $workerJmx := include "trino.roleConfig" (dict "block" .Values.jmx "role" "worker") | fromYaml -}}
+{{- if and $workerServiceMonitor.enabled $workerServiceMonitor.openMetrics.enabled }}
+{{- include "trino.checkWorkerScrapePassword" . }}
+{{- end }}
 {{- if $workerServiceMonitor.enabled }}
 apiVersion: {{ $workerServiceMonitor.apiVersion }}
 kind: ServiceMonitor
@@ -6,10 +10,11 @@ metadata:
   name: {{ template "trino.fullname" . }}-worker
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "trino.labels" . | nindent 4 }}
-    {{- if $workerServiceMonitor.labels }}
-    {{- toYaml $workerServiceMonitor.labels | nindent 4 }}
+    {{- $labels := include "trino.labels" . | fromYaml }}
+    {{- range $key, $value := $workerServiceMonitor.labels }}
+    {{- $_ := set $labels $key $value }}
     {{- end }}
+    {{- toYaml $labels | nindent 4 }}
 spec:
   selector:
     matchLabels:
@@ -19,9 +24,5 @@ spec:
     matchNames:
       - {{ .Release.Namespace }}
   endpoints:
-    - port: jmx-exporter
-      interval: {{ $workerServiceMonitor.interval }}
-      {{- if $workerServiceMonitor.scrapeTimeout }}
-      scrapeTimeout: {{ $workerServiceMonitor.scrapeTimeout }}
-      {{- end }}
+    {{- include "trino.serviceMonitorEndpoints" (dict "context" . "role" "worker" "serviceMonitor" $workerServiceMonitor "jmx" $workerJmx) | nindent 4 }}
 {{- end }}

@@ -33,4 +33,4 @@ if [[ "$(ls ${TRUST_CERTS_DIR})" ]]; then
     done;
 fi
 
-/usr/lib/trino/bin/run-trino
+exec /usr/lib/trino/bin/launcher run --etc-dir /etc/trino
