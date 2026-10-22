@@ -9,6 +9,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "trino.labels" . | nindent 4 }}
+    # Qubership custom change: Qubership release support
+    {{- include "to_add_to_service_labels" . | nindent 4 }}
     app.kubernetes.io/component: coordinator
   annotations:
     {{- toYaml $coordinatorService.annotations | nindent 4 }}
@@ -46,7 +48,6 @@ spec:
       appProtocol: {{ . }}
       {{- end }}
     {{- end }}
-        #--Qubership custom change---#
     {{- if $coordinatorJmx.exporter.enabled }}
     - port: {{ $coordinatorJmx.exporter.port }}
       targetPort: jmx-exporter
