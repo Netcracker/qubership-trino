@@ -618,12 +618,12 @@
               "description": "Maximum replicas for autoscaling"
             },
             "targetCPUUtilizationPercentage": {
-              "type": "integer",
+              "type": ["integer", "string"],
               "default": 50,
               "description": "Target CPU utilization percentage"
             },
             "targetMemoryUtilizationPercentage": {
-              "type": "integer",
+              "type": ["integer", "string"],
               "default": 80,
               "description": "Target memory utilization percentage"
             },
@@ -694,10 +694,106 @@
         }
       }
     },
+    "testImages": {
+      "type": "object",
+      "description": "Images of the containers the chart's Helm tests run",
+      "properties": {
+        "kubectl": {
+          "type": "object",
+          "properties": {
+            "repository": { "type": "string", "default": "alpine/kubectl" },
+            "tag": { "type": "string", "default": "1.37.1" },
+            "pullPolicy": { "type": "string", "default": "IfNotPresent" }
+          }
+        },
+        "postgresql": {
+          "type": "object",
+          "properties": {
+            "repository": { "type": "string", "default": "postgres" },
+            "tag": { "type": "string", "default": "18-alpine" },
+            "pullPolicy": { "type": "string", "default": "IfNotPresent" }
+          }
+        },
+        "python": {
+          "type": "object",
+          "properties": {
+            "repository": { "type": "string", "default": "python" },
+            "tag": { "type": "string", "default": "3-slim" },
+            "pullPolicy": { "type": "string", "default": "IfNotPresent" }
+          }
+        }
+      }
+    },
     "accessControl": {
       "type": "object",
       "default": {},
       "description": "System access control configuration"
+    },
+    "opa": {
+      "type": "object",
+      "description": "Open Policy Agent sidecar on the coordinator pod",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false, "description": "Deploy an OPA sidecar container on the coordinator pod" },
+        "image": { "type": "string", "default": "openpolicyagent/opa:1.21.2-static", "description": "OPA container image" },
+        "pullPolicy": { "type": "string", "default": "IfNotPresent", "description": "OPA image pull policy" },
+        "listenAddress": { "type": "string", "default": "127.0.0.1", "description": "Address OPA binds its API to inside the coordinator pod" },
+        "port": { "type": "integer", "default": 8181, "description": "Port OPA listens on" },
+        "diagnosticPort": { "type": "integer", "default": 8282, "description": "Port of OPA's read-only diagnostic listener" },
+        "policyPath": { "type": "string", "default": "/v1/data/trino/allow", "description": "Path of the document Trino asks for an authorization decision" },
+        "columnMaskingPath": { "type": "string", "default": "", "description": "Path of the document for column-masking decisions" },
+        "rowFiltersPath": { "type": "string", "default": "", "description": "Path of the document for row-filter decisions" },
+        "batchedPath": { "type": "string", "default": "", "description": "Path of the document for batched authorization decisions" },
+        "logRequests": { "type": "boolean", "default": false, "description": "Log every request Trino sends to OPA" },
+        "logResponses": { "type": "boolean", "default": false, "description": "Log every response Trino receives from OPA" },
+        "allowPermissionManagementOperations": { "type": "boolean", "default": false, "description": "Allow permission management statements without OPA evaluation" },
+        "policy": { "type": "object", "default": {}, "description": "Rego policy files keyed by file name, rendered into a ConfigMap" },
+        "policyConfigMap": { "type": "string", "default": "", "description": "Name of an existing ConfigMap holding the OPA policy files" },
+        "policyMountPath": { "type": "string", "default": "/policies", "description": "Directory inside the OPA container where the policy files are mounted" },
+        "extraArgs": { "type": "array", "default": [], "description": "Additional flags appended to the opa run command", "items": { "type": "string" } },
+        "securityContext": {
+          "$ref": "#/definitions/io.k8s.api.core.v1.SecurityContext",
+          "description": "Security context for the OPA container",
+          "default": {
+            "runAsNonRoot": true,
+            "runAsUser": 65532,
+            "runAsGroup": 65532,
+            "readOnlyRootFilesystem": true,
+            "allowPrivilegeEscalation": false,
+            "capabilities": { "drop": ["ALL"] },
+            "seccompProfile": { "type": "RuntimeDefault" }
+          }
+        },
+        "resources": {
+          "$ref": "#/definitions/io.k8s.api.core.v1.ResourceRequirements",
+          "description": "Resource requests and limits for the OPA container",
+          "default": {
+            "requests": { "cpu": "250m", "memory": "256Mi" },
+            "limits": { "memory": "512Mi" }
+          }
+        },
+        "livenessProbe": {
+          "type": "object",
+          "description": "Liveness probe for the OPA container",
+          "properties": {
+            "initialDelaySeconds": { "type": "integer", "default": 5 },
+            "periodSeconds": { "type": "integer", "default": 10 },
+            "timeoutSeconds": { "type": "integer", "default": 5 },
+            "failureThreshold": { "type": "integer", "default": 3 },
+            "successThreshold": { "type": "integer", "default": 1 }
+          }
+        },
+        "readinessProbe": {
+          "type": "object",
+          "description": "Readiness probe for the OPA container",
+          "properties": {
+            "initialDelaySeconds": { "type": "integer", "default": 5 },
+            "periodSeconds": { "type": "integer", "default": 10 },
+            "timeoutSeconds": { "type": "integer", "default": 5 },
+            "failureThreshold": { "type": "integer", "default": 3 },
+            "successThreshold": { "type": "integer", "default": 1 }
+          }
+        }
+      }
     },
     "headerAuthenticator": {
       "type": "object",
@@ -847,6 +943,11 @@
       "default": {},
       "description": "Sidecar containers configuration"
     },
+    "csiSecretMounts": {
+      "type": "array",
+      "default": [],
+      "description": "Additional secret mounts using the Secrets Store CSI driver"
+    },
     "securityContext": {
       "type": "object",
       "description": "Pod-level security context for the Trino Pods.",
@@ -918,6 +1019,32 @@
           ],
           "default": "",
           "description": "Node port for NodePort service type"
+        },
+        "appProtocols": {
+          "type": "object",
+          "default": {},
+          "description": "Application protocol of a service port, keyed by port name",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "loadBalancerSourceRanges": {
+          "type": "array",
+          "default": [],
+          "description": "Client address ranges allowed to reach the service of type LoadBalancer",
+          "items": {
+            "type": "string"
+          }
+        },
+        "coordinator": {
+          "type": "object",
+          "default": {},
+          "description": "Override service configurations for the coordinator service"
+        },
+        "worker": {
+          "type": "object",
+          "default": {},
+          "description": "Override service configurations for the (headless) worker service"
         }
       }
     },
@@ -969,6 +1096,16 @@
           ],
           "default": null,
           "description": "Priority class name for coordinator"
+        },
+        "hostAliases": {
+          "type": "array",
+          "default": [],
+          "description": "Entries added to the coordinator pod /etc/hosts"
+        },
+        "csiSecretMounts": {
+          "type": "array",
+          "default": [],
+          "description": "Secrets mounted on the coordinator using the Secrets Store CSI driver"
         },
         "deployment": {
           "type": "object",
@@ -1216,6 +1353,21 @@
           "default": null,
           "description": "Priority class name for worker"
         },
+        "podDisruptionBudget": {
+          "type": "object",
+          "default": {},
+          "description": "Worker Pod Disruption Budget spec; nothing is created while empty"
+        },
+        "hostAliases": {
+          "type": "array",
+          "default": [],
+          "description": "Entries added to the worker pod /etc/hosts"
+        },
+        "csiSecretMounts": {
+          "type": "array",
+          "default": [],
+          "description": "Secrets mounted on all worker nodes using the Secrets Store CSI driver"
+        },
         "deployment": {
           "type": "object",
           "properties": {
@@ -1390,6 +1542,11 @@
               "type": "integer",
               "default": 120,
               "description": "Grace period in seconds"
+            },
+            "user": {
+              "type": "string",
+              "default": "admin",
+              "description": "User the shutdown request is sent as"
             }
           }
         },
@@ -1517,6 +1674,16 @@
               "default": 5556,
               "description": "JMX exporter port"
             },
+            "env": {
+              "type": "array",
+              "default": [],
+              "description": "Environment variables for the JMX exporter container"
+            },
+            "envFrom": {
+              "type": "array",
+              "default": [],
+              "description": "Environment variables for the JMX exporter container from ConfigMap or Secret references"
+            },
             "configProperties": {
               "type": "string",
               "default": "",
@@ -1579,6 +1746,46 @@
           "type": "string",
           "default": "",
           "description": "Scrape timeout"
+        },
+        "openMetrics": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Scrape the OpenMetrics endpoint every Trino node serves on its own HTTP port"
+            },
+            "path": {
+              "type": "string",
+              "default": "/metrics",
+              "description": "OpenMetrics endpoint path"
+            },
+            "username": {
+              "type": "string",
+              "default": "admin",
+              "description": "The Trino user the scrape authenticates as"
+            },
+            "password": {
+              "type": "string",
+              "default": "",
+              "description": "The password sent with the username, on the coordinator only"
+            },
+            "authSecret": {
+              "type": "string",
+              "default": "",
+              "description": "Name of an existing Secret holding username and password keys"
+            }
+          }
+        },
+        "tlsConfig": {
+          "type": "object",
+          "default": {},
+          "description": "TLS settings for the scrape"
+        },
+        "endpoints": {
+          "type": "array",
+          "default": [],
+          "description": "User-defined scrape endpoints replacing the generated ones"
         },
         "coordinator": {
           "type": "object",
@@ -1829,6 +2036,11 @@
           }
         }
       }
+    },
+    "extraManifests": {
+      "type": "array",
+      "default": [],
+      "description": "Array of extra Kubernetes manifests to deploy with the release. Strings are evaluated as templates, other objects are used as YAML"
     },
     "PAAS_PLATFORM": {
       "type": "string",

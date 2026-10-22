@@ -18,14 +18,14 @@ spec:
     {{- range .Values.ingress.tls }}
     - hosts:
         {{- range .hosts }}
-        - {{ . | quote }}
+        - {{ tpl . $ | quote }}
         {{- end }}
       secretName: {{ tpl .secretName $ }}
     {{- end }}
   {{- end }}
   rules:
     {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
+    - host: {{ tpl .host $ | quote }}
       http:
         paths:
           {{- range .paths }}
@@ -35,12 +35,12 @@ spec:
               service:
                 name: {{ include "trino.fullname" $ }}
                 port:
-                # Qubership custom change: support secure connections
-                {{- if gt (len $.Values.ingress.tls) 0}}
+                  # Qubership custom change: support secure connections
+                  {{- if gt (len $.Values.ingress.tls) 0}}
                   number: {{ $.Values.server.config.https.port }}
-                {{- else }}
+                  {{- else }}
                   number: {{ $.Values.service.port }}
-                {{- end }}
+                  {{- end }}
           {{- end }}
     {{- end }}
-  {{- end }}
+{{- end }}

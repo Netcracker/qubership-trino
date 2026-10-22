@@ -1,18 +1,16 @@
-{{- $coordinatorJmx := merge .Values.jmx.coordinator (omit .Values.jmx "coordinator" "worker") -}}
+{{- $coordinatorJmx := include "trino.roleConfig" (dict "block" .Values.jmx "role" "coordinator") | fromYaml -}}
+{{- $coordinatorAccessControl := include "trino.roleConfig" (dict "block" .Values.accessControl "role" "coordinator") | fromYaml -}}
+{{- /* default list because concat panics on the nil that an explicit null in the values gives it */ -}}
+{{- $csiSecretMounts := concat (.Values.csiSecretMounts | default list) (.Values.coordinator.csiSecretMounts | default list) -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "trino.coordinator" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "trino.labels" . | nindent 4 }}
-# Qubership custom change: Qubership release support
+    {{- include "trino.roleLabels" (dict "context" . "role" "coordinator" "labels" .Values.coordinator.labels) | nindent 4 }}
+    # Qubership custom change: Qubership release support
     {{- include "to_add_to_deployment_labels" . | nindent 4 }}
-    app.kubernetes.io/component: coordinator
-    trino.io/network-policy-protection: {{ ternary "enabled" "disabled" .Values.networkPolicy.enabled }}
-    {{- if .Values.coordinator.labels }}
-    {{- tpl (toYaml .Values.coordinator.labels) . | nindent 4 }}
-    {{- end }}
   annotations:
     {{- toYaml .Values.coordinator.deployment.annotations | nindent 4 }}
 spec:
@@ -30,27 +28,21 @@ spec:
   template:
     metadata:
       annotations:
-        {{- if and .Values.accessControl (eq (default "" .Values.accessControl.type) "configmap") (not .Values.accessControl.refreshPeriod) }}
-        checksum/access-control-config: {{ include (print $.Template.BasePath "/configmap-access-control-coordinator.yaml") . | sha256sum }}
+        {{- $annotations := dict "checksum/coordinator-config" (include (print $.Template.BasePath "/configmap-coordinator.yaml") . | sha256sum) }}
+        {{- if and (eq (include "trino.configType" $coordinatorAccessControl) "configmap") (not $coordinatorAccessControl.refreshPeriod) }}
+        {{- $_ := set $annotations "checksum/access-control-config" (include (print $.Template.BasePath "/configmap-access-control-coordinator.yaml") . | sha256sum) }}
         {{- end }}
         {{- if or .Values.catalogs .Values.additionalCatalogs }}
-        checksum/catalog-config: {{ include (print $.Template.BasePath "/secret-catalog.yaml") . | sha256sum }}
+        {{- $_ := set $annotations "checksum/catalog-config" (include (print $.Template.BasePath "/secret-catalog.yaml") . | sha256sum) }}
         {{- end }}
-        checksum/coordinator-config: {{ include (print $.Template.BasePath "/configmap-coordinator.yaml") . | sha256sum }}
-      {{- if .Values.coordinator.annotations }}
-      {{- tpl (toYaml .Values.coordinator.annotations) . | nindent 8 }}
-      {{- end }}
-
+        {{- range $key, $value := .Values.coordinator.annotations }}
+        {{- $_ := set $annotations $key $value }}
+        {{- end }}
+        {{- tpl (toYaml $annotations) . | nindent 8 }}
       labels:
-# Qubership custom change: Qubership release support      
-        {{- include "all_trino_template.labels" . | nindent 8 }}
-# Qubership custom change: Qubership release support
+        # Qubership custom change: Qubership release support
         {{- include "to_add_to_deployment_labels" . | nindent 8 }}
-        app.kubernetes.io/component: coordinator
-        trino.io/network-policy-protection: {{ ternary "enabled" "disabled" .Values.networkPolicy.enabled }}
-        {{- if .Values.coordinator.labels }}
-        {{- tpl (toYaml .Values.coordinator.labels) . | nindent 8 }}
-        {{- end }}
+        {{- include "trino.roleLabels" (dict "context" . "role" "coordinator" "labels" .Values.coordinator.labels) | nindent 8 }}
     spec:
       {{- if .Values.coordinator.priorityClassName }}
       priorityClassName: {{ .Values.coordinator.priorityClassName }}
@@ -83,12 +75,12 @@ spec:
         - name: schemas-volume
           configMap:
             name: {{ template "trino.fullname" . }}-schemas-volume-coordinator
-        {{- if and .Values.accessControl (eq (default "" .Values.accessControl.type) "configmap") }}
+        {{- if eq (include "trino.configType" $coordinatorAccessControl) "configmap" }}
         - name: access-control-volume
           configMap:
-          name: {{ template "trino.fullname" . }}-access-control-volume-coordinator
+            name: {{ template "trino.fullname" . }}-access-control-volume-coordinator
         {{- end }}
-        {{- if and .Values.resourceGroups (eq (default "" .Values.resourceGroups.type) "configmap") }}
+        {{- if eq (include "trino.configType" .Values.resourceGroups) "configmap" }}
         - name: resource-groups-volume
           configMap:
             name: {{ template "trino.fullname" . }}-resource-groups-volume-coordinator
@@ -127,6 +119,11 @@ spec:
           secret:
             secretName: {{.Values.tls.generateCerts.secretName }}
         {{- end }}
+        {{- if .Values.opa.enabled }}
+        - name: opa-policy-volume
+          configMap:
+            name: {{ .Values.opa.policyConfigMap | default (printf "%s-opa-policy-coordinator" (include "trino.fullname" .)) }}
+        {{- end }}
         {{- range .Values.configMounts }}
         - name: {{ .name }}
           configMap:
@@ -147,6 +144,14 @@ spec:
           secret:
             secretName: {{ tpl .secretName $ }}
         {{- end }}
+        {{- range $csiSecretMounts }}
+        - name: {{ .name }}
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ tpl .secretProviderClass $ }}
+        {{- end }}
         {{- with .Values.coordinator.additionalVolumes }}
         {{- tpl (. | toYaml) $ | nindent 8 }}
         {{- end }}
@@ -157,6 +162,10 @@ spec:
       {{- if .Values.imagePullSecrets}}
       imagePullSecrets:
         {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      {{- if .Values.coordinator.hostAliases }}
+      hostAliases:
+      {{- toYaml .Values.coordinator.hostAliases | nindent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.coordinator.terminationGracePeriodSeconds }}
       containers:
@@ -211,11 +220,11 @@ spec:
               {{- end }}
             {{- end }}
             {{- end }}
-            {{- if and .Values.accessControl (eq (default "" .Values.accessControl.type) "configmap") }}
+            {{- if eq (include "trino.configType" $coordinatorAccessControl) "configmap" }}
             - mountPath: {{ .Values.server.config.path }}/access-control
               name: access-control-volume
             {{- end }}
-            {{- if and .Values.resourceGroups (eq (default "" .Values.resourceGroups.type) "configmap") }}
+            {{- if eq (include "trino.configType" .Values.resourceGroups) "configmap" }}
             - mountPath: {{ .Values.server.config.path }}/resource-groups
               name: resource-groups-volume
             {{- end }}
@@ -247,6 +256,13 @@ spec:
               subPath: {{ .subPath }}
               {{- end }}
             {{- end }}
+            {{- range $csiSecretMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .path }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+            {{- end }}
             {{- if or .Values.auth.passwordAuth .Values.auth.passwordAuthSecret }}
             - mountPath: {{ .Values.server.config.path }}/auth/password
               name: file-password-authentication-volume
@@ -262,11 +278,11 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-          {{- if .Values.server.config.https.enabled }}
+            {{- if .Values.server.config.https.enabled }}
             - name: https
               containerPort: {{ .Values.server.config.https.port }}
               protocol: TCP
-          {{- end }}
+            {{- end }}
             {{- if $coordinatorJmx.enabled }}
             - name: jmx-registry
               containerPort: {{ $coordinatorJmx.registryPort }}
@@ -318,6 +334,10 @@ spec:
           args:
             - "{{ $coordinatorJmx.exporter.port }}"
             - /etc/jmx-exporter/jmx-exporter-config.yaml
+          env:
+            {{- toYaml $coordinatorJmx.exporter.env | nindent 12 }}
+          envFrom:
+            {{- tpl (toYaml $coordinatorJmx.exporter.envFrom) . | nindent 12 }}
           volumeMounts:
             - mountPath: /etc/jmx-exporter/
               name: jmx-exporter-config-volume
@@ -327,6 +347,53 @@ spec:
             - name: jmx-exporter
               containerPort: {{ $coordinatorJmx.exporter.port }}
               protocol: TCP
+      {{- end }}
+      {{- if .Values.opa.enabled }}
+        - name: opa
+          image: {{ .Values.opa.image }}
+          imagePullPolicy: {{ .Values.opa.pullPolicy }}
+          {{- with .Values.opa.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          args:
+            - run
+            - --server
+            - --addr={{ .Values.opa.listenAddress }}:{{ .Values.opa.port }}
+            - --diagnostic-addr=0.0.0.0:{{ .Values.opa.diagnosticPort }}
+            - --log-format=json
+            - --watch
+            - --ignore=..*
+            {{- range .Values.opa.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
+            - {{ .Values.opa.policyMountPath }}
+          volumeMounts:
+            - name: opa-policy-volume
+              mountPath: {{ .Values.opa.policyMountPath }}
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.opa.diagnosticPort }}
+              scheme: HTTP
+            initialDelaySeconds: {{ .Values.opa.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.opa.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.opa.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.opa.livenessProbe.failureThreshold }}
+            successThreshold: {{ .Values.opa.livenessProbe.successThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /health?plugins
+              port: {{ .Values.opa.diagnosticPort }}
+              scheme: HTTP
+            initialDelaySeconds: {{ .Values.opa.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.opa.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.opa.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.opa.readinessProbe.failureThreshold }}
+            successThreshold: {{ .Values.opa.readinessProbe.successThreshold }}
+          resources:
+            {{- toYaml .Values.opa.resources | nindent 12 }}
       {{- end }}
       {{- if .Values.sidecarContainers.coordinator }}
         {{- toYaml .Values.sidecarContainers.coordinator | nindent 8 }}

@@ -1,4 +1,7 @@
-{{- $coordinatorJmx := merge .Values.jmx.coordinator (omit .Values.jmx "coordinator" "worker") -}}
+{{- $coordinatorJmx := include "trino.roleConfig" (dict "block" .Values.jmx "role" "coordinator") | fromYaml -}}
+{{- include "trino.checkServiceOverrides" (dict "role" "coordinator" "overrides" .Values.service.coordinator "supported" (list "annotations" "appProtocols" "type" "nodePort" "loadBalancerSourceRanges")) -}}
+{{- $coordinatorService := include "trino.roleConfig" (dict "block" .Values.service "role" "coordinator") | fromYaml -}}
+{{- $appProtocols := $coordinatorService.appProtocols | default dict -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -6,53 +9,65 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "trino.labels" . | nindent 4 }}
-# Qubership custom change: Qubership release support
+    # Qubership custom change: Qubership release support
     {{- include "to_add_to_service_labels" . | nindent 4 }}
     app.kubernetes.io/component: coordinator
   annotations:
-    {{- toYaml .Values.service.annotations | nindent 4 }}
+    {{- toYaml $coordinatorService.annotations | nindent 4 }}
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ $coordinatorService.type }}
+  {{- with $coordinatorService.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: http
       protocol: TCP
       name: http
-      #--Qubership custom change---#
-      {{ if .Values.service.type }}
-      {{ if eq .Values.service.type "NodePort" }}
-      {{- if .Values.service.nodePort }}
-      nodePort: {{ .Values.service.nodePort }}
+      {{- with index $appProtocols "http" }}
+      appProtocol: {{ . }}
       {{- end }}
+      {{- if and $coordinatorService.nodePort (eq $coordinatorService.type "NodePort") }}
+      nodePort: {{ $coordinatorService.nodePort }}
       {{- end }}
-      {{- end }}
-  # Qubership custom change: support secure connection    
-  {{- if .Values.server.config.https.enabled }}
+    {{- if .Values.server.config.https.enabled }}
     - port: {{ .Values.server.config.https.port }}
       targetPort: https
       protocol: TCP
       name: https
+      # Qubership custom change: support secure connection
+      {{- if and .Values.server.config.https.nodeport (eq $coordinatorService.type "NodePort") }}
       nodePort: {{ .Values.server.config.https.nodeport }}
-  {{- end }}
-      #--Qubership custom change---#
-  {{- if $coordinatorJmx.exporter.enabled }}
-  - port: {{ $coordinatorJmx.exporter.port }}
-    targetPort: jmx-exporter
-    protocol: TCP
-    name: jmx-exporter
-    {{- if $coordinatorJmx.exporter.nodePort }}
-    nodePort: {{ $coordinatorJmx.exporter.nodePort }}
+      {{- end }}
+      {{- with index $appProtocols "https" }}
+      appProtocol: {{ . }}
+      {{- end }}
     {{- end }}
-  {{- end }}
-  {{- range $key, $value := .Values.coordinator.additionalExposedPorts }}
-  - port: {{ $value.servicePort }}
-    name: {{ $value.name }}
-    targetPort: {{ $value.port }}
-    protocol: {{ $value.protocol }}
-    {{- if $value.nodePort }}
-    nodePort: {{ $value.nodePort }}
+    {{- if $coordinatorJmx.exporter.enabled }}
+    - port: {{ $coordinatorJmx.exporter.port }}
+      targetPort: jmx-exporter
+      protocol: TCP
+      name: jmx-exporter
+      {{- with index $appProtocols "jmx-exporter" }}
+      appProtocol: {{ . }}
+      {{- end }}
+      {{- if $coordinatorJmx.exporter.nodePort }}
+      nodePort: {{ $coordinatorJmx.exporter.nodePort }}
+      {{- end }}
     {{- end }}
-  {{- end }}
+    {{- range $key, $value := .Values.coordinator.additionalExposedPorts }}
+    - port: {{ $value.servicePort }}
+      name: {{ $value.name }}
+      targetPort: {{ $value.port }}
+      protocol: {{ $value.protocol }}
+      {{- with index $appProtocols $value.name }}
+      appProtocol: {{ . }}
+      {{- end }}
+      {{- if $value.nodePort }}
+      nodePort: {{ $value.nodePort }}
+      {{- end }}
+    {{- end }}
   selector:
     {{- include "trino.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: coordinator

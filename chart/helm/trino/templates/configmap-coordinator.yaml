@@ -1,4 +1,5 @@
-{{- $coordinatorJmx := merge .Values.jmx.coordinator (omit .Values.jmx "coordinator" "worker") -}}
+{{- $coordinatorJmx := include "trino.roleConfig" (dict "block" .Values.jmx "role" "coordinator") | fromYaml -}}
+{{- $coordinatorAccessControl := include "trino.roleConfig" (dict "block" .Values.accessControl "role" "coordinator") | fromYaml -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -12,8 +13,11 @@ data:
     node.environment={{ tpl .Values.server.node.environment . }}
     node.data-dir={{ .Values.server.node.dataDir }}
     plugin.dir={{ .Values.server.node.pluginDir }}
+    node.id=${ENV:HOSTNAME}
   {{- range $configValue := .Values.additionalNodeProperties }}
-    {{ $configValue }}
+  {{- with tpl $configValue $ }}
+    {{ . }}
+  {{- end }}
   {{- end }}
 
   jvm.config: |
@@ -46,7 +50,7 @@ data:
     -XX:+EnableDynamicAgentLoading
   {{/* only check the version number if the image is not overriden in any way */}}
   {{- with .Values.image -}}
-  {{- if and (eq .repository "trinodb/trino") (not .useRepositoryAsSoleImageReference) (not .registry) (not .digest) (gt (default $.Chart.AppVersion .tag | int ) 447 ) }}
+  {{- if and (eq .repository "trinodb/trino") (not .useRepositoryAsSoleImageReference) (not .registry) (not .digest) (gt (default $.Chart.AppVersion .tag | toString | regexFind "^[0-9]+" | int) 447) }}
     # https://bugs.openjdk.org/browse/JDK-8329528
     -XX:+UnlockDiagnosticVMOptions
     -XX:G1NumCollectionsKeepPinned=10000000
@@ -73,7 +77,9 @@ data:
     http-server.authentication.type={{ .Values.server.config.authenticationType }}
     {{- end }}
     {{- range $configValue := .Values.additionalConfigProperties }}
-    {{ $configValue }}
+    {{- with tpl $configValue $ }}
+    {{ . }}
+    {{- end }}
     {{- end }}
     {{- if .Values.server.config.https.enabled }}
     http-server.https.enabled=true
@@ -91,32 +97,55 @@ data:
     {{- .Values.server.coordinatorExtraConfig | nindent 4 }}
     {{- end }}
 
-  {{- if .Values.accessControl }}
-  {{- if eq .Values.accessControl.type "configmap" }}
+{{- if $coordinatorAccessControl }}
+  {{- if eq (include "trino.configType" $coordinatorAccessControl) "configmap" }}
   access-control.properties: |
     access-control.name=file
-    {{- if .Values.accessControl.refreshPeriod }}
-    security.refresh-period={{ .Values.accessControl.refreshPeriod }}
+    {{- if $coordinatorAccessControl.refreshPeriod }}
+    security.refresh-period={{ $coordinatorAccessControl.refreshPeriod }}
     {{- end }}
-    security.config-file={{ .Values.server.config.path }}/access-control/{{ .Values.accessControl.configFile | default "rules.json" }}
-    {{- else if eq .Values.accessControl.type "properties" }}
+    security.config-file={{ .Values.server.config.path }}/access-control/{{ $coordinatorAccessControl.configFile | default "rules.json" }}
+  {{- else if eq (include "trino.configType" $coordinatorAccessControl) "properties" }}
   access-control.properties: |
-    {{- if .Values.accessControl.properties }}
-    {{- .Values.accessControl.properties | nindent 4 }}
+    {{- if $coordinatorAccessControl.properties }}
+    {{- $coordinatorAccessControl.properties | nindent 4 }}
     {{- else}}
     {{- fail "accessControl.properties is required when accessControl.type is 'properties'." }}
     {{- end }}
-    {{- else}}
-    {{- fail "Invalid accessControl.type value. It must be either 'configmap' or 'properties'." }}
-    {{- end }}
+  {{- else}}
+  {{- fail "Invalid accessControl.type value. It must be either 'configmap' or 'properties'." }}
   {{- end }}
+{{- else if .Values.opa.enabled }}
+  access-control.properties: |
+    access-control.name=opa
+    {{- $opaUrl := printf "http://127.0.0.1:%v" .Values.opa.port }}
+    opa.policy.uri={{ $opaUrl }}{{ .Values.opa.policyPath }}
+    {{- with .Values.opa.columnMaskingPath }}
+    opa.policy.column-masking-uri={{ $opaUrl }}{{ . }}
+    {{- end }}
+    {{- with .Values.opa.rowFiltersPath }}
+    opa.policy.row-filters-uri={{ $opaUrl }}{{ . }}
+    {{- end }}
+    {{- with .Values.opa.batchedPath }}
+    opa.policy.batched-uri={{ $opaUrl }}{{ . }}
+    {{- end }}
+    {{- if .Values.opa.logRequests }}
+    opa.log-requests=true
+    {{- end }}
+    {{- if .Values.opa.logResponses }}
+    opa.log-responses=true
+    {{- end }}
+    {{- if .Values.opa.allowPermissionManagementOperations }}
+    opa.allow-permission-management-operations=true
+    {{- end }}
+{{- end }}
 
- {{- if .Values.resourceGroups }}
-  {{- if eq .Values.resourceGroups.type "configmap" }}
+{{- if .Values.resourceGroups }}
+  {{- if eq (include "trino.configType" .Values.resourceGroups) "configmap" }}
   resource-groups.properties: |
     resource-groups.configuration-manager=file
     resource-groups.config-file={{ .Values.server.config.path }}/resource-groups/resource-groups.json
-  {{- else if eq .Values.resourceGroups.type "properties" }}
+  {{- else if eq (include "trino.configType" .Values.resourceGroups) "properties" }}
   resource-groups.properties: |
     {{- if .Values.resourceGroups.properties }}
     {{- .Values.resourceGroups.properties | nindent 4 }}
@@ -129,14 +158,14 @@ data:
 {{- end }}
 
 {{- if .Values.sessionProperties }}
-  {{- if eq .Values.sessionProperties.type "configmap" }}
+  {{- if eq (include "trino.configType" .Values.sessionProperties) "configmap" }}
   session-property-config.properties: |
     session-property-config.configuration-manager=file
     session-property-manager.config-file={{ .Values.server.config.path }}/session-property-config.json
 
   session-property-config.json: |
     {{- .Values.sessionProperties.sessionPropertiesConfig | nindent 4 }}
-  {{- else if eq .Values.sessionProperties.type "properties" }}
+  {{- else if eq (include "trino.configType" .Values.sessionProperties) "properties" }}
   session-property-config.properties: |
     {{- if .Values.sessionProperties.properties }}
     {{- .Values.sessionProperties.properties | nindent 4 }}
@@ -153,14 +182,18 @@ data:
     exchange-manager.name={{ .Values.server.exchangeManager.name }}
     exchange.base-directories={{ join "," .Values.server.exchangeManager.baseDir }}
   {{- range $configValue := .Values.additionalExchangeManagerProperties }}
-    {{ $configValue }}
+  {{- with tpl $configValue $ }}
+    {{ . }}
+  {{- end }}
   {{- end }}
 {{- end }}
 
   log.properties: |
     io.trino={{ .Values.server.log.trino.level }}
   {{- range $configValue := .Values.additionalLogProperties }}
-    {{ $configValue }}
+  {{- with tpl $configValue $ }}
+    {{ . }}
+  {{- end }}
   {{- end }}
 
   {{- if contains "PASSWORD" .Values.server.config.authenticationType }}{{- if not (index .Values.coordinator.additionalConfigFiles "password-authenticator.properties") }}
@@ -187,10 +220,20 @@ data:
     {{- end }}
   {{- end }}{{- end }}
 
-{{ if .Values.eventListenerProperties }}
+{{/* An event listener has to declare event-listener.name, so unlike the other
+     property lists this one is rendered before the file is opened: writing the
+     file with nothing in it stops the server from starting, while leaving it
+     out is what a false condition is asking for. */ -}}
+{{ $eventListenerProperties := list -}}
+{{ range $configValue := .Values.eventListenerProperties -}}
+{{ with tpl $configValue $ -}}
+{{ $eventListenerProperties = append $eventListenerProperties . -}}
+{{ end -}}
+{{ end -}}
+{{ if $eventListenerProperties }}
   event-listener.properties: |
-  {{- range $configValue := .Values.eventListenerProperties }}
-    {{ $configValue }}
+  {{- range $eventListenerProperties }}
+    {{ . }}
   {{- end }}
 {{ end }}
 
@@ -198,7 +241,7 @@ data:
   {{ $fileName }}: |
     {{- tpl $fileContent $ | nindent 4 }}
 {{- end }}
-{{- if and .Values.resourceGroups (eq (default "" .Values.resourceGroups.type) "configmap") }}
+{{- if eq (include "trino.configType" .Values.resourceGroups) "configmap" }}
 ---
 apiVersion: v1
 kind: ConfigMap
