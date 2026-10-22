@@ -11,7 +11,6 @@ RUN apk add --no-cache curl && \
     mkdir -p /opt/seaweedfs && \
     curl -k -L $MAVEN_REPO/com/seaweedfs/seaweedfs-hadoop3-client/$SEAWEEDFS_VERSION/seaweedfs-hadoop3-client-$SEAWEEDFS_VERSION.jar --output /opt/seaweedfs/seaweedfs-hadoop3-client-$SEAWEEDFS_VERSION.jar
 
-# Patched Jackson jars (CVE-2026-110879, CVE-2026-104895), named like the ones in /usr/lib/trino/lib.
 RUN mkdir -p /opt/jackson && \
     for coords in \
         core:jackson-core \
@@ -61,7 +60,6 @@ RUN for plugin in iceberg delta-lake hudi lakehouse; do \
         || exit 1; \
     done
 
-# Replace the vulnerable Jackson 2.22.3 jars.
 ARG JACKSON_VERSION
 COPY --from=unpacker --chmod=0644 /opt/jackson/ /usr/lib/trino/lib/
 RUN rm -f /usr/lib/trino/lib/*jackson*-2.22.3.jar
