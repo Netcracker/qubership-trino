@@ -40,9 +40,7 @@ spec:
         {{- end }}
         {{- tpl (toYaml $annotations) . | nindent 8 }}
       labels:
-# Qubership custom change: Qubership release support      
-        {{- include "all_trino_template.labels" . | nindent 8 }}
-# Qubership custom change: Qubership release support
+        # Qubership custom change: Qubership release support
         {{- include "to_add_to_deployment_labels" . | nindent 8 }}
         {{- include "trino.roleLabels" (dict "context" . "role" "coordinator" "labels" .Values.coordinator.labels) | nindent 8 }}
     spec:

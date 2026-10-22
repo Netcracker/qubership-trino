@@ -25,18 +25,10 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
-      #--Qubership custom change---#
-      {{ if .Values.service.type }}
-      {{ if eq .Values.service.type "NodePort" }}
-      {{- if .Values.service.nodePort }}
-      nodePort: {{ .Values.service.nodePort }}
-      {{- end }}
-      {{- end }}
-      {{- end }}
       {{- with index $appProtocols "http" }}
       appProtocol: {{ . }}
       {{- end }}
-      {{- if $coordinatorService.nodePort }}
+      {{- if and $coordinatorService.nodePort (eq $coordinatorService.type "NodePort") }}
       nodePort: {{ $coordinatorService.nodePort }}
       {{- end }}
     {{- if .Values.server.config.https.enabled }}
@@ -44,6 +36,10 @@ spec:
       targetPort: https
       protocol: TCP
       name: https
+      # Qubership custom change: support secure connection
+      {{- if and .Values.server.config.https.nodeport (eq $coordinatorService.type "NodePort") }}
+      nodePort: {{ .Values.server.config.https.nodeport }}
+      {{- end }}
       {{- with index $appProtocols "https" }}
       appProtocol: {{ . }}
       {{- end }}

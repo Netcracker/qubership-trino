@@ -67,7 +67,8 @@ Returns YAML, so call it through fromYaml to add more labels to it.
 {{- $_ := set $labels "helm.sh/chart" (include "trino.chart" .) }}
 {{- $_ := set $labels "app.kubernetes.io/managed-by" .Release.Service }}
 {{- if .Chart.AppVersion }}
-{{- $_ := set $labels "app.kubernetes.io/version" .Chart.AppVersion }}
+{{- /* Qubership custom change: the version label is the image tag */ -}}
+{{- $_ := set $labels "app.kubernetes.io/version" (splitList ":" (include "trino_image" .) | last) }}
 {{- end }}
 {{- range $key, $value := .Values.commonLabels }}
 {{- $_ := set $labels $key $value }}
@@ -75,24 +76,6 @@ Returns YAML, so call it through fromYaml to add more labels to it.
 {{- tpl (toYaml $labels) . }}
 {{- end }}
 
-
-#--Qubership custom change---
-{{/*
-Template labels
-*/}}
-{{- define "all_trino_template.labels" -}}
-helm.sh/chart: {{ include "trino.chart" . }}
-{{ include "trino.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-#--Qubership custom-label-value-change-
-app.kubernetes.io/version: {{ splitList ":" ( include "trino_image" . ) | last | quote }}
-#--Qubership custom-label-value-change-
-{{- end }}
-{{- if .Values.commonLabels }}
-{{ tpl (toYaml .Values.commonLabels) . }}
-{{- end }}
-{{- end }}
-#--Qubership custom change---
 
 {{/*
 The labels of a role's deployment and its pods: the common labels, the role and
