@@ -111,9 +111,9 @@ worker:
       cpu: 100m
       memory: 2G
 jmx:
-  
   exporter:
-    image: bitnami/jmx-exporter:latest
+    image: bitnamilegacy/jmx-exporter:1.4.0
+    pullPolicy: Always
 commonLabels:
   app.kubernetes.io/part-of: trino
 tls:
@@ -185,54 +185,14 @@ Hive Metastore URI
 {{- end -}}
 
 
-{{/*
-Common labels
-*/}}
-{{- define "trino.labels" -}}
-helm.sh/chart: {{ include "trino.chart" . }}
-{{ include "trino.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-#--Qubership custom-label-value-change-
-app.kubernetes.io/version: {{ splitList ":" ( include "trino_image" . ) | last | quote }}
-#--Qubership custom-label-value-change-
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- if .Values.commonLabels }}
-{{ tpl (toYaml .Values.commonLabels) . }}
-{{- end }}
-{{- end }}
-
-
-#--Qubership custom change---
-{{/*
-Template labels
-*/}}
-{{- define "all_trino_template.labels" -}}
-helm.sh/chart: {{ include "trino.chart" . }}
-{{ include "trino.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-#--Qubership custom-label-value-change-
-app.kubernetes.io/version: {{ splitList ":" ( include "trino_image" . ) | last | quote }}
-#--Qubership custom-label-value-change-
-{{- end }}
-{{- if .Values.commonLabels }}
-{{ tpl (toYaml .Values.commonLabels) . }}
-{{- end }}
-{{- end }}
-#--Qubership custom change---
+# Qubership custom change: in the `trino.labels` helper the version label is the image tag instead of the chart appVersion
+{{- $_ := set $labels "app.kubernetes.io/version" (splitList ":" (include "trino_image" .) | last) }}
 
 # Qubership custom change: Qubership release support
 {{/*
 To add to service labels for Qubership release
 */}}
 {{- define "to_add_to_service_labels" -}}
-name: {{ include "trino.name" . }}
-{{- end }}
-
-{{/*
-To add to deployment label for Qubership release
-*/}}
-{{- define "to_add_to_deployment_labels" -}}
 name: {{ include "trino.name" . }}
 {{- end }}
 
@@ -266,8 +226,6 @@ spec:
         labels:
             # Qubership custom change: Qubership release support
             {{- include "to_add_to_deployment_labels" . | nindent 8 }}
-# Qubership custom change: Qubership release support      
-            {{- include "all_trino_template.labels" . | nindent 8 }}
     spec:
       {{- if .Values.coordinator.priorityClassName }}
       priorityClassName: {{ .Values.coordinator.priorityClassName }}
@@ -358,11 +316,8 @@ spec:
   template:
     metadata:
         labels:
-        
-# Qubership custom change: Qubership release support
+        # Qubership custom change: Qubership release support
         {{- include "to_add_to_deployment_labels" . | nindent 8 }}
-# Qubership custom change: Qubership release support      
-        {{- include "all_trino_template.labels" . | nindent 8 }}
     spec:
       {{- if .Values.worker.priorityClassName }}
       priorityClassName: {{ .Values.worker.priorityClassName }}
@@ -482,44 +437,26 @@ metadata:
     {{- include "to_add_to_service_labels" . | nindent 4 }}
     
 spec:
-  
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
+    {{- if .Values.server.config.https.enabled }}
+    - port: {{ .Values.server.config.https.port }}
+      targetPort: https
       protocol: TCP
-      name: http
-      #--Qubership custom chang---#
-      {{ if .Values.service.type }}
-      {{ if eq .Values.service.type "NodePort" }}
-      {{- if .Values.service.nodePort }}
-      nodePort: {{ .Values.service.nodePort }}
+      name: https
+      # Qubership custom change: support secure connection
+      {{- if and .Values.server.config.https.nodeport (eq $coordinatorService.type "NodePort") }}
+      nodePort: {{ .Values.server.config.https.nodeport }}
       {{- end }}
-      {{- end }}
-      {{- end }}
-  # Qubership custom change: support secure connection      
-  {{- if .Values.server.config.https.enabled }}
-      - port: { { .Values.server.config.https.port } }
-        targetPort: https
-        protocol: TCP
-        name: https
-        nodePort: {{ .Values.server.config.https.nodeport }}
-  {{- end }}
-      #--Qubership custom change---#
+    {{- end }}
 ```
+
 ### `service-worker.yaml`
 
 ```yaml
-{{- $workerJmx := merge .Values.jmx.worker (omit .Values.jmx "coordinator" "worker") -}}
-apiVersion: v1
-kind: Service
 metadata:
-  name: {{ template "trino.fullname" . }}-worker
-  namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "trino.labels" . | nindent 4 }}
 # Qubership custom change: Qubership release support    
     {{- include "to_add_to_service_labels" . | nindent 4 }}
-    
 ```
 ### `httproute.yaml`
 
@@ -564,7 +501,6 @@ These files are added to provide complete TLS support and enable integration wit
 ### `secret-catalog.yaml`
 
 Used to securely store Trino catalog configurations (such as database connection properties) using Kubernetes Secrets instead of ConfigMaps. It replaces the community `configmap-catalog.yaml`.
-
 ---
 
 ### `pvc-dynamic-catalog.yaml`
@@ -578,5 +514,4 @@ The PVC is intentionally not wired into the coordinator deployment template, kee
 ### `values.schema.json`
 
 Custom schema that defines the structure, types, and allowed fields for `values.yaml`, ensuring configurations are valid and consistent. It enables Helm to validate inputs during linting and templating, preventing misconfigurations at deployment time.
-
 ---
