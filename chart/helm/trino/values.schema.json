@@ -2022,7 +2022,7 @@
     },
     "PAAS_PLATFORM": {
       "type": "string",
-      "description": "The PaaS platform where Hive Metastore is being deployed to."  
+      "description": "The PaaS platform where Trino is being deployed to."  
     }
   }
 }
