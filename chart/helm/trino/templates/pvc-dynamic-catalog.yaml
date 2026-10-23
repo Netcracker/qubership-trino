@@ -8,6 +8,10 @@ metadata:
   labels:
     {{- include "trino.labels" . | nindent 4 }}
     app.kubernetes.io/component: coordinator
+  {{- with .Values.dynamicCatalogPVC.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   accessModes:
     - {{ .Values.dynamicCatalogPVC.accessMode }}

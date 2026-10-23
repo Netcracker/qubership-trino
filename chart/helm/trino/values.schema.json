@@ -694,36 +694,6 @@
         }
       }
     },
-    "testImages": {
-      "type": "object",
-      "description": "Images of the containers the chart's Helm tests run",
-      "properties": {
-        "kubectl": {
-          "type": "object",
-          "properties": {
-            "repository": { "type": "string", "default": "alpine/kubectl" },
-            "tag": { "type": "string", "default": "1.37.1" },
-            "pullPolicy": { "type": "string", "default": "IfNotPresent" }
-          }
-        },
-        "postgresql": {
-          "type": "object",
-          "properties": {
-            "repository": { "type": "string", "default": "postgres" },
-            "tag": { "type": "string", "default": "18-alpine" },
-            "pullPolicy": { "type": "string", "default": "IfNotPresent" }
-          }
-        },
-        "python": {
-          "type": "object",
-          "properties": {
-            "repository": { "type": "string", "default": "python" },
-            "tag": { "type": "string", "default": "3-slim" },
-            "pullPolicy": { "type": "string", "default": "IfNotPresent" }
-          }
-        }
-      }
-    },
     "accessControl": {
       "type": "object",
       "default": {},
@@ -920,6 +890,14 @@
           "type": "string",
           "default": "",
           "description": "Use an existing PVC name instead of creating one"
+        },
+        "annotations": {
+          "type": "object",
+          "default": {},
+          "description": "Annotations to add to the created PVC",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },
@@ -2044,7 +2022,7 @@
     },
     "PAAS_PLATFORM": {
       "type": "string",
-      "description": "The PaaS platform where Hive Metastore is being deployed to."
+      "description": "The PaaS platform where Trino is being deployed to."  
     }
   }
 }

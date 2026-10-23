@@ -688,6 +688,8 @@ additionalCatalogs: {}
 #   accessMode: ReadWriteOnce
 #   size: 1Gi
 #   existingClaim: ""
+#   annotations:
+#     argocd.argoproj.io/sync-options: Prune=false
 # ```
 dynamicCatalogPVC:
   # dynamicCatalogPVC.enabled -- Set to true to create the PVC.
@@ -700,6 +702,14 @@ dynamicCatalogPVC:
   size: 1Gi
   # dynamicCatalogPVC.existingClaim -- Use an existing PVC instead of creating one.
   existingClaim: ""
+  # dynamicCatalogPVC.annotations -- Annotations to add to the created PVC.
+  # @raw
+  # Example:
+  # ```yaml
+  # annotations:
+  #   argocd.argoproj.io/sync-options: Prune=false
+  # ```
+  annotations: {}
 
 env: []
 # env -- additional environment variables added to every pod, specified as a list with explicit values
