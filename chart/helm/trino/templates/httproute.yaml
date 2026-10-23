@@ -1,4 +1,12 @@
-{{- if  .Values.gateway.enabled -}}
+{{- /* Qubership custom change: when gateway.enabled is null, GATEWAY_SYSTEM_TYPE decides whether the HTTPRoute is created */}}
+{{- if eq (include "trino.gatewayEnabled" .) "true" -}}
+{{- /* Qubership custom change: fail only when both toggles are explicitly true. When derived from GATEWAY_SYSTEM_TYPE, both resources can coexist. */}}
+{{- if and (eq (toString .Values.ingress.enabled) "true") (eq (toString .Values.gateway.enabled) "true") }}
+{{- fail "`ingress.enabled` and `gateway.enabled` are both set to `true`. HTTPRoute (Gateway API) is an alternative to the Ingress; enable only one of them." }}
+{{- end }}
+{{- if not (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1") }}
+{{- fail "Gateway API CRDs (gateway.networking.k8s.io/v1) are required for HTTPRoute but are not available in the cluster." }}
+{{- end }}
 {{- $fullname := (include "trino.fullname" .) }}
 {{- $coordinatorName := (include "trino.coordinator" .) }}
 #--Qubership custom change---

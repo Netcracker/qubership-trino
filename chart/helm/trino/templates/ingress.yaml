@@ -1,4 +1,5 @@
-{{- if .Values.ingress.enabled -}}
+{{- /* Qubership custom change: when ingress.enabled is null, GATEWAY_SYSTEM_TYPE decides whether the Ingress is created */}}
+{{- if eq (include "trino.ingressEnabled" .) "true" -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

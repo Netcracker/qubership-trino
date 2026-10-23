@@ -101,11 +101,22 @@ The following table lists the configurable parameters of the Trino chart and the
 | `kafka.mountPath` |  | `"/etc/trino/schemas"`                            |
 | `kafka.tableDescriptions` |  | `{}`                                              |
 | `commonLabels` | Labels that get applied to every resource's metadata | `{}`                                              |
-| `ingress.enabled` |  | `false`                                           |
+| `GATEWAY_SYSTEM_TYPE` | The mode of Gateway applications must use during installation: `"legacy-ingress"`, `"gateway-api-default"`, or `"legacy-ingress, gateway-api-default"` for both. | `"legacy-ingress"`                                |
+| `GATEWAY_SYSTEM_NAME` | The name of the Gateway API Gateway controller, used as spec.parentRefs.name on HTTPRoute resources. | `"default-external-gateway"`                      |
+| `GATEWAY_SYSTEM_NAMESPACE` | The namespace of the Gateway API Gateway controller, used as spec.parentRefs.namespace on HTTPRoute resources. | `"gateway-system"`                              |
+| `ingress.enabled` | Enable Ingress. `false` by default; set to `null` to derive it from `GATEWAY_SYSTEM_TYPE` containing `"legacy-ingress"`, or `true`/`false` to override. | `false`                                           |
 | `ingress.className` |  | `""`                                              |
 | `ingress.annotations` |  | `{}`                                              |
 | `ingress.hosts` |  | `[]`                                              |
 | `ingress.tls` |  | `[]`                                              |
+| `gateway.enabled` | Enable Gateway API HTTPRoute. `false` by default; set to `null` to derive it from `GATEWAY_SYSTEM_TYPE` containing `"gateway-api-default"`, or `true`/`false` to override. | `false`                                           |
+| `gateway.annotations` |  | `{}`                                              |
+| `gateway.parentRefs` | Parent gateway references. Defaults to a single ref built from `GATEWAY_SYSTEM_NAME` and `GATEWAY_SYSTEM_NAMESPACE`. | see values.yaml                                   |
+| `gateway.hostnames` |  | `[]`                                              |
+| `gateway.rules` | HTTPRoute rules. Defaults to a single rule that routes `/` to the Trino service. | see values.yaml                                   |
+| `gateway.redirectRoute.enabled` |  | `false`                                           |
+| `gateway.redirectRoute.parentRefs` | Defaults to a single ref built from `GATEWAY_SYSTEM_NAME` and `GATEWAY_SYSTEM_NAMESPACE` that targets port `80`. | see values.yaml                                   |
+| `gateway.backendTLSPolicy.enabled` |  | `false`                                           |
 | `networkPolicy.enabled` |  | `false`                                              |
 | `networkPolicy.ingress` |  | `[]`                                              |
 | `networkPolicy.egress` |  | `[]`                                              |
