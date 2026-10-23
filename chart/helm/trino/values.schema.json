@@ -2019,6 +2019,10 @@
       "type": "array",
       "default": [],
       "description": "Array of extra Kubernetes manifests to deploy with the release. Strings are evaluated as templates, other objects are used as YAML"
+    },
+    "PAAS_PLATFORM": {
+      "type": "string",
+      "description": "The PaaS platform where Hive Metastore is being deployed to."  
     }
   }
 }
