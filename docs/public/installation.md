@@ -712,7 +712,7 @@ The Qubership platform provides the `GATEWAY_SYSTEM_TYPE`, `GATEWAY_SYSTEM_NAME`
 * If `GATEWAY_SYSTEM_TYPE` contains `gateway-api-default`, the HTTPRoute is created.
 * If `GATEWAY_SYSTEM_TYPE` contains both values (for example, `"legacy-ingress, gateway-api-default"`), both the Ingress and the HTTPRoute are created.
 
-Set `ingress.enabled` or `gateway.enabled` explicitly to `true` or `false` to override this behavior regardless of `GATEWAY_SYSTEM_TYPE`. Setting both to `true` fails the deployment. The HTTPRoute also requires the Gateway API CRDs in the cluster; the deployment fails if they are missing.
+Set `ingress.enabled` or `gateway.enabled` explicitly to `true` or `false` to override this behavior regardless of `GATEWAY_SYSTEM_TYPE`. The HTTPRoute requires the Gateway API CRDs in the cluster.
 
 Following configuration parameters are available:
 
