@@ -56,7 +56,6 @@ Create chart name and version as used by the chart label.
 {{ define "trino_image" -}}
 {{ printf "%s:%v" (.Values.image.repository) (.Values.image.tag) }}
 {{- end }}
-#--Qubership custom change---
 
 {{/*
 Whether to render the legacy Ingress resource. Uses .Values.ingress.enabled when explicitly set
@@ -82,6 +81,8 @@ explicitly set (true/false); otherwise falls back to whether GATEWAY_SYSTEM_TYPE
 {{- .Values.gateway.enabled -}}
 {{- end -}}
 {{- end -}}
+
+#--Qubership custom change---
 
 {{/*
 Common labels, with commonLabels set over them so it can override any of them.

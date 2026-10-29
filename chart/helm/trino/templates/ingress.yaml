@@ -13,6 +13,7 @@ metadata:
   annotations:
     {{- toYaml .Values.ingress.annotations | nindent 4 }}
 spec:
+#--Qubership custom change: Ingress class name is optional, and can be set via values.yaml
   {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
   {{- end }}
