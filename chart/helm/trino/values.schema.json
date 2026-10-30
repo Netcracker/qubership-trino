@@ -1791,9 +1791,9 @@
       "type": "object",
       "properties": {
         "enabled": {
-          "type": "boolean",
+          "type": ["boolean", "null"],
           "default": false,
-          "description": "Enable Ingress"
+          "description": "Enable Ingress. Set to null to derive it from GATEWAY_SYSTEM_TYPE containing \"legacy-ingress\"."
         },
         "className": {
           "type": "string",
@@ -1838,9 +1838,9 @@
       "type": "object",
       "properties": {
         "enabled": {
-          "type": "boolean",
+          "type": ["boolean", "null"],
           "default": false,
-          "description": "Enable Gateway API"
+          "description": "Enable Gateway API. Set to null to derive it from GATEWAY_SYSTEM_TYPE containing \"gateway-api-default\"."
         },
         "annotations": {
           "type": "object",
@@ -1852,8 +1852,15 @@
         },
         "parentRefs": {
           "type": "array",
-          "default": [],
-          "description": "Parent gateway references"
+          "default": [
+            {
+              "group": "gateway.networking.k8s.io",
+              "kind": "Gateway",
+              "name": "{{ .Values.GATEWAY_SYSTEM_NAME }}",
+              "namespace": "{{ .Values.GATEWAY_SYSTEM_NAMESPACE }}"
+            }
+          ],
+          "description": "Parent gateway references. Defaults to a single ref built from GATEWAY_SYSTEM_NAME and GATEWAY_SYSTEM_NAMESPACE."
         },
         "hostnames": {
           "type": "array",
@@ -1862,7 +1869,14 @@
         },
         "rules": {
           "type": "array",
-          "default": [],
+          "default": [
+            {
+              "path": {
+                "type": "PathPrefix",
+                "value": "/"
+              }
+            }
+          ],
           "description": "HTTPRoute rules"
         },
         "redirectRoute": {
@@ -1875,8 +1889,16 @@
             },
             "parentRefs": {
               "type": "array",
-              "default": [],
-              "description": "Redirect route parent refs"
+              "default": [
+                {
+                  "group": "gateway.networking.k8s.io",
+                  "kind": "Gateway",
+                  "name": "{{ .Values.GATEWAY_SYSTEM_NAME }}",
+                  "namespace": "{{ .Values.GATEWAY_SYSTEM_NAMESPACE }}",
+                  "port": 80
+                }
+              ],
+              "description": "Redirect route parent refs. Defaults to a single ref built from GATEWAY_SYSTEM_NAME and GATEWAY_SYSTEM_NAMESPACE that targets port 80."
             }
           }
         },
@@ -2019,6 +2041,21 @@
       "type": "array",
       "default": [],
       "description": "Array of extra Kubernetes manifests to deploy with the release. Strings are evaluated as templates, other objects are used as YAML"
+    },
+    "GATEWAY_SYSTEM_TYPE": {
+      "description": "The mode of Gateway applications must use during installation: \"legacy-ingress\", \"gateway-api-default\", or \"legacy-ingress, gateway-api-default\" for both.",
+      "type": "string",
+      "default": "legacy-ingress"
+    },
+    "GATEWAY_SYSTEM_NAME": {
+      "description": "The name of the Gateway API Gateway controller, used as spec.parentRefs.name on HTTPRoute resources.",
+      "type": "string",
+      "default": "default-external-gateway"
+    },
+    "GATEWAY_SYSTEM_NAMESPACE": {
+      "description": "The namespace of the Gateway API Gateway controller, used as spec.parentRefs.namespace on HTTPRoute resources.",
+      "type": "string",
+      "default": "gateway-system"
     },
     "PAAS_PLATFORM": {
       "type": "string",

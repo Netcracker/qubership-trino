@@ -1751,7 +1751,14 @@ serviceMonitor:
 commonLabels:
   app.kubernetes.io/part-of: trino
 
+# Qubership-platform provided parameters
+# that drive the automatic switch between ingress.enabled and gateway.enabled below.
+GATEWAY_SYSTEM_TYPE: "legacy-ingress"
+GATEWAY_SYSTEM_NAME: "default-external-gateway"
+GATEWAY_SYSTEM_NAMESPACE: "gateway-system"
+
 ingress:
+  # Set to true/false to override, or null to derive from GATEWAY_SYSTEM_TYPE (enabled when it contains "legacy-ingress").
   enabled: false
   className: ""
 #--Qubership custom change: Ingress specific labels    
@@ -1799,6 +1806,7 @@ gateway:
   # > - Requires Gateway API CRDs to be installed in the cluster
   # > - Not recommended to use together with `ingress.enabled` (choose one or the other)
   # > - Requires a Gateway resource to be configured separately
+  # Set to true/false to override, or null to derive from GATEWAY_SYSTEM_TYPE (enabled when it contains "gateway-api-default").
   enabled: false
   annotations: {}
   # gateway.annotations -- Annotations to add to the HTTPRoute resource.
@@ -1807,7 +1815,14 @@ gateway:
   # ```yaml
   #  gateway.networking.k8s.io/example: "value"
   # ```
-  parentRefs: []
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: "{{ .Values.GATEWAY_SYSTEM_NAME }}"
+      namespace: "{{ .Values.GATEWAY_SYSTEM_NAMESPACE }}"
+      # Uncomment if using gateway.redirectRoute (HTTP-to-HTTPS redirect)
+      # so this route only targets the Envoy Gateway's HTTPS listener.
+      # port: 443
   # gateway.parentRefs -- References to the Gateway resources that this HTTPRoute should attach to.
   # @raw
   # Example:
@@ -1824,7 +1839,10 @@ gateway:
   #  - trino.example.com
   #  - trino-prod.example.com
   # ```
-  rules: []
+  rules:
+    - path:
+        type: PathPrefix
+        value: /
   # gateway.rules -- HTTPRoute rules for routing traffic to Trino.
   # Each rule can use either the simplified `path` format for basic routing,
   # or the full `matches` format for advanced use cases.
@@ -1859,7 +1877,13 @@ gateway:
   # ```
   redirectRoute:
     enabled: false
-    parentRefs: []
+    # Targets the Envoy Gateway's HTTP listener.
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: "{{ .Values.GATEWAY_SYSTEM_NAME }}"
+        namespace: "{{ .Values.GATEWAY_SYSTEM_NAMESPACE }}"
+        port: 80
   backendTLSPolicy:
       enabled: false
       hostname: ''

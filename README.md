@@ -35,6 +35,13 @@ additionalNodeProperties:
 # Qubership custom change: support Read only filesystem and logging to stdout
   - http-server.log.enabled=false
   - http-server.log.console.enabled=true    
+
+# Qubership-platform provided parameters
+# that drive the automatic switch between ingress.enabled and gateway.enabled below.
+GATEWAY_SYSTEM_TYPE: "legacy-ingress"
+GATEWAY_SYSTEM_NAME: "default-external-gateway"
+GATEWAY_SYSTEM_NAMESPACE: "gateway-system"
+
 ingress:
 #--Qubership custom change: Ingress specific labels    
   labels:
@@ -43,7 +50,48 @@ ingress:
     deployment.netcracker.com/ingress-audience-type: conf-user
   annotations:
 # Qbuership custom change: migration to Gateway API, ignore ingress resources  
-    gateway-api-converter.netcracker.com/ignore: "true"     
+    gateway-api-converter.netcracker.com/ignore: "true"    
+
+gateway:
+  # gateway.enabled -- Set to true to create HTTPRoute resources for [Kubernetes Gateway API](https://gateway-api.sigs.k8s.io/).
+  # The Gateway API is the successor to the Ingress API and provides more advanced routing capabilities.
+  # @raw
+  # > [!NOTE]
+  # > - Requires Gateway API CRDs to be installed in the cluster
+  # > - Not recommended to use together with `ingress.enabled` (choose one or the other)
+  # > - Requires a Gateway resource to be configured separately
+  # Set to true/false to override, or null to derive from GATEWAY_SYSTEM_TYPE (enabled when it contains "gateway-api-default").
+  enabled: false
+  annotations: {}
+  # gateway.annotations -- Annotations to add to the HTTPRoute resource.
+  # @raw
+  # Example:
+  # ```yaml
+  #  gateway.networking.k8s.io/example: "value"
+  # ```
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: "{{ .Values.GATEWAY_SYSTEM_NAME }}"
+      namespace: "{{ .Values.GATEWAY_SYSTEM_NAMESPACE }}"
+      # Uncomment if using gateway.redirectRoute (HTTP-to-HTTPS redirect)
+      # so this route only targets the Envoy Gateway's HTTPS listener.
+      # port: 443
+  rules:
+    - path:
+        type: PathPrefix
+        value: /
+  redirectRoute:
+    enabled: false
+    # Targets the Envoy Gateway's HTTP listener.
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: "{{ .Values.GATEWAY_SYSTEM_NAME }}"
+        namespace: "{{ .Values.GATEWAY_SYSTEM_NAMESPACE }}"
+        port: 80          
+
+
 server:
   node:
   config:
@@ -152,6 +200,33 @@ dynamicCatalogPVC:
 {{ define "trino_image" -}}
 {{ printf "%s:%v" (.Values.image.repository) (.Values.image.tag) }}
 {{- end }}
+
+
+{{/*
+Whether to render the legacy Ingress resource. Uses .Values.ingress.enabled when explicitly set
+(true/false); otherwise falls back to whether GATEWAY_SYSTEM_TYPE contains "legacy-ingress".
+*/}}
+{{- define "trino.ingressEnabled" -}}
+{{- if eq .Values.ingress.enabled nil -}}
+{{- contains "legacy-ingress" (.Values.GATEWAY_SYSTEM_TYPE | default "" | toString) -}}
+{{- else -}}
+{{- .Values.ingress.enabled -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether to render the Gateway API HTTPRoute resources. Uses .Values.gateway.enabled when
+explicitly set (true/false); otherwise falls back to whether GATEWAY_SYSTEM_TYPE contains
+"gateway-api-default".
+*/}}
+{{- define "trino.gatewayEnabled" -}}
+{{- if eq .Values.gateway.enabled nil -}}
+{{- contains "gateway-api-default" (.Values.GATEWAY_SYSTEM_TYPE | default "" | toString) -}}
+{{- else -}}
+{{- .Values.gateway.enabled -}}
+{{- end -}}
+{{- end -}}
+
 #--Qubership custom change---
 
 # Qubership custom change: custom values for MinIO S3
@@ -396,6 +471,8 @@ spec:
 ### `ingress.yaml`
 
 ```yaml
+{{- /* Qubership custom change: when ingress.enabled is null, GATEWAY_SYSTEM_TYPE decides whether the Ingress is created */}}
+{{- if eq (include "trino.ingressEnabled" .) "true" -}}
 metadata:
   labels:
 #--Qubership custom change: Ingress specific labels      
@@ -403,6 +480,10 @@ metadata:
     {{- $customLabels := .Values.ingress.labels | default dict }}
     {{- mustMerge $labels $customLabels | toYaml | nindent 4 }}
 spec:
+  #--Qubership custom change: Ingress class name is optional, and can be set via values.yaml
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
     rules:
     {{- range .Values.ingress.hosts }}
     - host: {{ .host | quote }}
@@ -461,7 +542,8 @@ metadata:
 ### `httproute.yaml`
 
 ```yaml
-{{- if  .Values.gateway.enabled -}}
+{{- /* Qubership custom change: when gateway.enabled is null, GATEWAY_SYSTEM_TYPE decides whether the HTTPRoute is created */}}
+{{- if eq (include "trino.gatewayEnabled" .) "true" -}}
 {{- $fullname := (include "trino.fullname" .) }}
 {{- $coordinatorName := (include "trino.coordinator" .) }}
 #--Qubership custom change---

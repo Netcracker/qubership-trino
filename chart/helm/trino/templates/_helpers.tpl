@@ -56,6 +56,32 @@ Create chart name and version as used by the chart label.
 {{ define "trino_image" -}}
 {{ printf "%s:%v" (.Values.image.repository) (.Values.image.tag) }}
 {{- end }}
+
+{{/*
+Whether to render the legacy Ingress resource. Uses .Values.ingress.enabled when explicitly set
+(true/false); otherwise falls back to whether GATEWAY_SYSTEM_TYPE contains "legacy-ingress".
+*/}}
+{{- define "trino.ingressEnabled" -}}
+{{- if eq .Values.ingress.enabled nil -}}
+{{- contains "legacy-ingress" (.Values.GATEWAY_SYSTEM_TYPE | default "" | toString) -}}
+{{- else -}}
+{{- .Values.ingress.enabled -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether to render the Gateway API HTTPRoute resources. Uses .Values.gateway.enabled when
+explicitly set (true/false); otherwise falls back to whether GATEWAY_SYSTEM_TYPE contains
+"gateway-api-default".
+*/}}
+{{- define "trino.gatewayEnabled" -}}
+{{- if eq .Values.gateway.enabled nil -}}
+{{- contains "gateway-api-default" (.Values.GATEWAY_SYSTEM_TYPE | default "" | toString) -}}
+{{- else -}}
+{{- .Values.gateway.enabled -}}
+{{- end -}}
+{{- end -}}
+
 #--Qubership custom change---
 
 {{/*

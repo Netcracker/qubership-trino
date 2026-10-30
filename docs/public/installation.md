@@ -271,7 +271,10 @@ The following table lists the configurable parameters of the Trino chart and the
 | `worker.gracefulShutdown`                          |   Configure [graceful shutdown](https://trino.io/docs/current/admin/graceful-shutdown.html) in order to ensure that workers terminate without affecting running queries, given a sufficient grace period. When enabled, the value of `worker.terminationGracePeriodSeconds` must be at least two times greater than the configured `gracePeriodSeconds`. Enabling `worker.gracefulShutdown` conflicts with `worker.lifecycle`. When a custom `worker.lifecycle` configuration needs to be used, graceful shutdown must be configured manually.                                                                                                                                                                                                                                                                                                                                                                                 | `{"enabled":false,"gracePeriodSeconds":120}`                                                 |
 | `kafka.mountPath`                                   | The path to mount custom Kafka table descriptions.                                                                                                                                                                                                                                                                                                                                                               | `"/etc/trino/schemas"`                               |
 | `kafka.tableDescriptions`                           | The custom Kafka table descriptions that are mounted in `kafka.mountPath`.                                                                                                                                                                                                                                                                                                                                       | `{}`                                                 |
-| `ingress.enabled`                                   | If Trino ingress should be deployed.                                                                                                                                                                                                                                                                                                                                                                             | `false`                                              |
+| `GATEWAY_SYSTEM_TYPE`                             | The mode of Gateway applications must use during installation: `"legacy-ingress"`, `"gateway-api-default"`, or `"legacy-ingress, gateway-api-default"` for both. When `ingress.enabled`/`gateway.enabled` are `null`, the chart derives whether to create the Ingress and/or HTTPRoute from this value.                                                                                                                                                                              | `"legacy-ingress"`                                   |
+| `GATEWAY_SYSTEM_NAME`                               | The name of the Gateway API Gateway controller, used as `spec.parentRefs.name` on HTTPRoute resources.                                                                                                                                                                                                                                                                                                           | `"default-external-gateway"`                         |
+| `GATEWAY_SYSTEM_NAMESPACE`                          | The namespace of the Gateway API Gateway controller, used as `spec.parentRefs.namespace` on HTTPRoute resources.                                                                                                                                                                                                                                                                                                  | `"gateway-system"`                                   |
+| `ingress.enabled`                                   | If Trino ingress should be deployed. `false` by default; set to `null` to derive it from `GATEWAY_SYSTEM_TYPE` containing `"legacy-ingress"`, or `true`/`false` to override.                                                                                                                                                                                                                                                                         | `false`                                              |
 | `ingress.className`                                 | Ingress className.                                                                                                                                                                                                                                                                                                                                                                                               | `""`                                                 |
 | `ingress.annotations`                               | Ingress annotations.                                                                                                                                                                                                                                                                                                                                                                                             | `{}`                                                 |
 | `ingress.hosts`                                     | Ingress hosts configuration.                                                                                                                                                                                                                                                                                                                                                                                     | `[]`                                                 |
@@ -704,24 +707,76 @@ It is possible to deploy the following three objects:
 * Redirect HTTPRoute - It can be used for redirecting trino user interface client from HTTP to HTTPS when using gateway with custom certificate.
 * BackendTLSPolicy - It is required for verifying trino certificate, when TLS is enabled on trino server inside K8S.
 
+The Qubership platform provides the `GATEWAY_SYSTEM_TYPE`, `GATEWAY_SYSTEM_NAME`, and `GATEWAY_SYSTEM_NAMESPACE` parameters, which describe the shared Gateway in the cluster. When `ingress.enabled` and `gateway.enabled` are `null` (the default), the chart derives them independently from `GATEWAY_SYSTEM_TYPE`:
+* If `GATEWAY_SYSTEM_TYPE` contains `legacy-ingress`, the Ingress is created.
+* If `GATEWAY_SYSTEM_TYPE` contains `gateway-api-default`, the HTTPRoute is created.
+* If `GATEWAY_SYSTEM_TYPE` contains both values (for example, `"legacy-ingress, gateway-api-default"`), both the Ingress and the HTTPRoute are created.
+
+Set `ingress.enabled` or `gateway.enabled` explicitly to `true` or `false` to override this behavior regardless of `GATEWAY_SYSTEM_TYPE`. The HTTPRoute requires the Gateway API CRDs in the cluster.
+
 Following configuration parameters are available:
 
 |Name|Type|Default|Description|
 |---|---|---|---|
-|gateway.enabled|`boolean`|`false`|Specifies if HTTPRoute for trino server is deployed|
+|GATEWAY_SYSTEM_TYPE|`string`|`legacy-ingress`|Specifies whether to create the Ingress (`legacy-ingress`), the HTTPRoute (`gateway-api-default`), or both (`"legacy-ingress, gateway-api-default"`) when `ingress.enabled`/`gateway.enabled` are `null`|
+|GATEWAY_SYSTEM_NAME|`string`|`default-external-gateway`|Name of the shared Gateway, used as the default `parentRefs[].name` for HTTPRoutes|
+|GATEWAY_SYSTEM_NAMESPACE|`string`|`gateway-system`|Namespace of the shared Gateway, used as the default `parentRefs[].namespace` for HTTPRoutes|
+|ingress.enabled|`boolean`|`false`|Specifies if Ingress for trino server is deployed. `false` by default; set to `null` to derive it from `GATEWAY_SYSTEM_TYPE`, or `true`/`false` to override|
+|gateway.enabled|`boolean`|`false`|Specifies if HTTPRoute for trino server is deployed. `false` by default; set to `null` to derive it from `GATEWAY_SYSTEM_TYPE`, or `true`/`false` to override|
 |gateway.annotations|`object`|`{}`|Annotations for HTTPRoute and related objects|
-|gateway.parentRefs|`array`|`[]`|parentRefs for HTTPRoute|
+|gateway.parentRefs|`array`|see below|parentRefs for HTTPRoute. Defaults to a single ref built from `GATEWAY_SYSTEM_NAME` and `GATEWAY_SYSTEM_NAMESPACE`|
 |gateway.hostnames|`array`|`[]`|hostnames for HTTPRoute|
-|gateway.rules|`array`|`[]`|rules for HTTPRoute. When `rules[].matches` is not set, it defaults to `path.type=PathPrefix` and `path.value=/`. `backendRefs` in the rule will point to trino server service, but the weight can be configured if needed.|
+|gateway.rules|`array`|see below|rules for HTTPRoute. When `rules[].matches` is not set, it defaults to `path.type=PathPrefix` and `path.value=/`. `backendRefs` in the rule will point to trino server service, but the weight can be configured if needed.|
 |gateway.redirectRoute.enabled|`boolean`|`false`|Specifies if redirect HTTPRoute for trino server is deployed|
-|gateway.redirectRoute.parentRefs|`array`|`[]`|parentRefs for redirect HTTPRoute|
+|gateway.redirectRoute.parentRefs|`array`|see below|parentRefs for redirect HTTPRoute. Defaults to a single ref built from `GATEWAY_SYSTEM_NAME` and `GATEWAY_SYSTEM_NAMESPACE` that targets port `80`|
 |gateway.backendTLSPolicy.enabled|`boolean`|`false`|Specifies if the backendTLSPolicy should be deployed|
 |gateway.backendTLSPolicy.hostname|`string`|`''`|Hostname for backendTLSPolicy|
 |gateway.backendTLSPolicy.caCertificateRefs|`array`|`[]`|caCertificateRefs for backendTLSPolicy|
 |gateway.backendTLSPolicy.wellKnownCACertificates|`string`|`""`|wellKnownCACertificates for backendTLSPolicy|
 |gateway.backendTLSPolicy.subjectAltNames|`array`|`[]`|subjectAltNames for backendTLSPolicy|
 
-The configuration examples are provided below:
+Default `gateway.parentRefs`:
+```yaml
+gateway:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: "{{ .Values.GATEWAY_SYSTEM_NAME }}"
+      namespace: "{{ .Values.GATEWAY_SYSTEM_NAMESPACE }}"
+      # Uncomment if using gateway.redirectRoute (HTTP-to-HTTPS redirect)
+      # so this route only targets the Envoy Gateway's HTTPS listener.
+      # port: 443
+```
+
+Default `gateway.redirectRoute.parentRefs`:
+```yaml
+gateway:
+  redirectRoute:
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: "{{ .Values.GATEWAY_SYSTEM_NAME }}"
+        namespace: "{{ .Values.GATEWAY_SYSTEM_NAMESPACE }}"
+        port: 80
+```
+
+Default `gateway.rules`:
+```yaml
+gateway:
+  rules:
+    - path:
+        type: PathPrefix
+        value: /
+```
+
+Zero-config (default): with `GATEWAY_SYSTEM_TYPE` set to `gateway-api-default` by the platform, only `hostnames` needs to be set — the HTTPRoute is created automatically, attached to the shared Gateway named by `GATEWAY_SYSTEM_NAME`/`GATEWAY_SYSTEM_NAMESPACE`, and routes `/` to the Trino service using the default `gateway.rules` shown above:
+```yaml
+gateway:
+  hostnames:
+    - trino-gateway.your.k8s.hostname
+```
+
+The following examples show explicit configuration, overriding the automatic defaults above:
 
 Non tls:
 ```yaml

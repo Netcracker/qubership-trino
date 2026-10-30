@@ -1,4 +1,5 @@
-{{- if  .Values.gateway.enabled -}}
+{{- /* Qubership custom change: when gateway.enabled is null, GATEWAY_SYSTEM_TYPE decides whether the HTTPRoute is created */}}
+{{- if eq (include "trino.gatewayEnabled" .) "true" -}}
 {{- $fullname := (include "trino.fullname" .) }}
 {{- $coordinatorName := (include "trino.coordinator" .) }}
 #--Qubership custom change---
