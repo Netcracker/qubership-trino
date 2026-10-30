@@ -596,13 +596,13 @@
         },
         "workerExtraConfig": {
           "type": "string",
-          "default": "",
+          "default": "catalog.management=dynamic\n",
           "description": "Extra worker configuration"
         },
         "coordinatorExtraConfig": {
           "type": "string",
           "description": "Extra coordinator configuration",
-          "default": "http-server.process-forwarded=IGNORE\n"
+          "default": "http-server.process-forwarded=IGNORE\ncatalog.management=dynamic\ncatalog.store=file\ncatalog.prune.update-interval=5s\n"
         },
         "autoscaling": {
           "type": "object",
@@ -864,11 +864,11 @@
     },
     "dynamicCatalogPVC": {
       "type": "object",
-      "description": "PVC for the coordinator catalog directory, used with experimental dynamic catalog management",
+      "description": "PVC for the coordinator catalog directory, used with dynamic catalog management. Enabled by default; the chart mounts it automatically and creates catalog-store.properties.",
       "properties": {
         "enabled": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Set to true to create the PVC"
         },
         "storageClass": {
@@ -1111,8 +1111,8 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "default": "RollingUpdate",
-                  "description": "Deployment strategy type"
+                  "default": "Recreate",
+                  "description": "Deployment strategy type. Recreate by default because dynamic catalog uses a ReadWriteOnce PVC."
                 },
                 "rollingUpdate": {
                   "type": "object",

@@ -28,8 +28,8 @@ The following table lists the configurable parameters of the Trino chart and the
 | `server.config.authenticationType` |  | `""`                                              |
 | `server.config.query.maxMemory` |  | `"4GB"`                                           |
 | `server.exchangeManager` |  | `{}`                                    |
-| `server.workerExtraConfig` |  | `""`                                              |
-| `server.coordinatorExtraConfig` |  | `""`                                              |
+| `server.workerExtraConfig` | Additional worker config.properties entries. Default enables dynamic catalog management. | `catalog.management=dynamic`                      |
+| `server.coordinatorExtraConfig` | Additional coordinator config.properties entries. Default enables dynamic catalog management and preserves `http-server.process-forwarded=IGNORE`. | see values.yaml                                     |
 | `server.autoscaling.enabled` |  | `false`                                           |
 | `server.autoscaling.maxReplicas` |  | `5`                                               |
 | `server.autoscaling.targetCPUUtilizationPercentage` |  | `50`                                              |
@@ -59,7 +59,7 @@ The following table lists the configurable parameters of the Trino chart and the
 | `secretMounts` |  | `[]`                                              |
 | `coordinator.deployment.progressDeadlineSeconds` |  | `600`                                            |
 | `coordinator.deployment.revisionHistoryLimit` |  | `10`                                            |
-| `coordinator.deployment.strategy` |  | `{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"}`                                            |
+| `coordinator.deployment.strategy` | Recreate by default because the dynamic catalog PVC is ReadWriteOnce. | `{"type":"Recreate"}`                             |
 | `coordinator.jvm.maxHeapSize` |  | `"8G"`                                            |
 | `coordinator.jvm.gcMethod.type` |  | `"UseG1GC"`                                       |
 | `coordinator.jvm.gcMethod.g1.heapRegionSize` |  | `"32M"`                                           |
@@ -79,7 +79,6 @@ The following table lists the configurable parameters of the Trino chart and the
 | `coordinator.secretMounts` |  | `[]`                                              |
 | `worker.deployment.progressDeadlineSeconds` |  | `600`                                            |
 | `worker.deployment.revisionHistoryLimit` |  | `10`                                            |
-| `coordinator.deployment.strategy` |  | `{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"}`                                            |
 | `worker.jvm.maxHeapSize` |  | `"8G"`                                            |
 | `worker.jvm.gcMethod.type` |  | `"UseG1GC"`                                       |
 | `worker.jvm.gcMethod.g1.heapRegionSize` |  | `"32M"`                                           |
@@ -117,6 +116,11 @@ The following table lists the configurable parameters of the Trino chart and the
 | `gateway.redirectRoute.enabled` |  | `false`                                           |
 | `gateway.redirectRoute.parentRefs` | Defaults to a single ref built from `GATEWAY_SYSTEM_NAME` and `GATEWAY_SYSTEM_NAMESPACE` that targets port `80`. | see values.yaml                                   |
 | `gateway.backendTLSPolicy.enabled` |  | `false`                                           |
+| `dynamicCatalogPVC.enabled` | Create a PVC for the coordinator's catalog directory. Enabled by default for dynamic catalog management. | `true`                                            |
+| `dynamicCatalogPVC.storageClass` |  | `""`                                              |
+| `dynamicCatalogPVC.accessMode` |  | `"ReadWriteOnce"`                                 |
+| `dynamicCatalogPVC.size` |  | `"1Gi"`                                           |
+| `dynamicCatalogPVC.existingClaim` |  | `""`                                              |
 | `networkPolicy.enabled` |  | `false`                                              |
 | `networkPolicy.ingress` |  | `[]`                                              |
 | `networkPolicy.egress` |  | `[]`                                              |

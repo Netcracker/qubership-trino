@@ -85,9 +85,13 @@ server:
   #   - exchange.source-concurrent-readers=4
   # ```
 
-  workerExtraConfig: ""
+  workerExtraConfig: |
+    catalog.management=dynamic
   coordinatorExtraConfig: |
     http-server.process-forwarded=IGNORE
+    catalog.management=dynamic
+    catalog.store=file
+    catalog.prune.update-interval=5s
   # server.autoscaling -- Configure [Horizontal Pod Autoscaling](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
   # for workers (`server.keda.enabled` must be `false`).
   autoscaling:
@@ -676,9 +680,10 @@ additionalCatalogs: {}
 
 # Qubership custom change: dynamic catalog support
 # dynamicCatalogPVC -- Creates a PersistentVolumeClaim for the coordinator's catalog directory,
-# required when using experimental dynamic catalog management with file store
+# required when using dynamic catalog management with file store
 # (https://trino.io/docs/current/admin/properties-catalog.html).
-# Disabled by default. See example-dynamic-catalog.yaml for a full usage example.
+# Enabled by default; the chart mounts it automatically into the coordinator and creates
+# the required catalog-store.properties. Set to false to use static catalog management only.
 # @raw
 # Example:
 # ```yaml
@@ -693,7 +698,7 @@ additionalCatalogs: {}
 # ```
 dynamicCatalogPVC:
   # dynamicCatalogPVC.enabled -- Set to true to create the PVC.
-  enabled: false
+  enabled: true
   # dynamicCatalogPVC.storageClass -- StorageClass for the PVC (can be templated). Leave empty to use the cluster default.
   storageClass: ""
   # dynamicCatalogPVC.accessMode -- Access mode for the PVC.
@@ -938,11 +943,11 @@ coordinator:
     # coordinator.deployment.revisionHistoryLimit -- The number of old ReplicaSets to retain to allow rollback.
 
     strategy:
-      type: RollingUpdate
-      rollingUpdate:
-        maxSurge: 25%
-        maxUnavailable: 25%
+      type: Recreate
     # coordinator.deployment.strategy -- The deployment strategy to use to replace existing pods with new ones.
+    # Recreate is required by default because dynamic catalog uses a ReadWriteOnce PVC that cannot be mounted by two
+    # coordinator pods at the same time. Change to RollingUpdate only if you disable dynamicCatalogPVC or use a
+    # storage class that supports ReadWriteMany.
 
   jvm:
     maxHeapSize: "1638M"

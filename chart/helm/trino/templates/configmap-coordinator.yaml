@@ -237,6 +237,10 @@ data:
   {{- end }}
 {{ end }}
 
+{{- if .Values.dynamicCatalogPVC.enabled }}
+  catalog-store.properties: |
+    catalog.config-dir=/etc/trino/catalog
+{{- end }}
 {{- range $fileName, $fileContent := .Values.coordinator.additionalConfigFiles }}
   {{ $fileName }}: |
     {{- tpl $fileContent $ | nindent 4 }}

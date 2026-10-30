@@ -67,10 +67,17 @@ spec:
         - name: config-volume
           configMap:
             name: {{ template "trino.coordinator" . }}
-        {{- if or .Values.catalogs .Values.additionalCatalogs }}
+        # Qubership custom change: skip static catalog-volume when dynamic catalog PVC is mounted at the same path.
+        {{- if and (or .Values.catalogs .Values.additionalCatalogs) (not .Values.dynamicCatalogPVC.enabled) }}
         - name: catalog-volume
           secret:
             secretName: {{ template "trino.catalog" . }}
+        {{- end }}
+        # Qubership custom change: dynamic catalog PVC mount
+        {{- if .Values.dynamicCatalogPVC.enabled }}
+        - name: dynamic-catalog
+          persistentVolumeClaim:
+            claimName: {{ template "trino.fullname" . }}-dynamic-catalog
         {{- end }}
         - name: schemas-volume
           configMap:
@@ -188,9 +195,15 @@ spec:
           volumeMounts:
             - mountPath: {{ .Values.server.config.path }}
               name: config-volume
-            {{- if or .Values.catalogs .Values.additionalCatalogs }}
+            # Qubership custom change: skip static catalog-volume mount when dynamic catalog PVC is mounted at the same path.
+            {{- if and (or .Values.catalogs .Values.additionalCatalogs) (not .Values.dynamicCatalogPVC.enabled) }}
             - mountPath: {{ .Values.server.config.path }}/catalog
               name: catalog-volume
+            {{- end }}
+            # Qubership custom change: dynamic catalog PVC mount
+            {{- if .Values.dynamicCatalogPVC.enabled }}
+            - name: dynamic-catalog
+              mountPath: /etc/trino/catalog
             {{- end }}
             - mountPath: {{ .Values.kafka.mountPath }}
               name: schemas-volume

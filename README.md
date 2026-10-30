@@ -184,7 +184,7 @@ tls:
     clusterIssuerName: common-cluster-issuer
 # Qubership custom change: dynamic catalog support
 dynamicCatalogPVC:
-  enabled: false
+  enabled: true
   storageClass: ""
   accessMode: ReadWriteOnce
   size: 1Gi
@@ -587,9 +587,9 @@ Used to securely store Trino catalog configurations (such as database connection
 
 ### `pvc-dynamic-catalog.yaml`
 
-Added to support experimental [dynamic catalog management](https://trino.io/docs/current/admin/properties-catalog.html). Creates a PersistentVolumeClaim for the coordinator's catalog directory when `dynamicCatalogPVC.enabled: true`, providing the writable storage required by `catalog.store=file` on a read-only root filesystem.
+Added to support [dynamic catalog management](https://trino.io/docs/current/admin/properties-catalog.html). Creates a PersistentVolumeClaim for the coordinator's catalog directory when `dynamicCatalogPVC.enabled: true` (the default), providing the writable storage required by `catalog.store=file` on a read-only root filesystem.
 
-The PVC is intentionally not wired into the coordinator deployment template, keeping the change minimal and close to upstream. Users connect it via `coordinator.additionalVolumes`, `coordinator.additionalVolumeMounts`, `coordinator.additionalConfigFiles`, and `server.coordinatorExtraConfig`. See the [Dynamic Catalogs](docs/public/installation.md#dynamic-catalogs-experimental) section of the installation guide for full configuration details.
+The chart now wires the PVC into the coordinator deployment automatically, adds the required `catalog-store.properties`, and enables dynamic catalog management in `server.coordinatorExtraConfig` and `server.workerExtraConfig` by default. The coordinator deployment strategy defaults to `Recreate` because the default `ReadWriteOnce` PVC cannot be mounted by two coordinator pods at the same time. See the [Dynamic Catalogs](docs/public/installation.md#dynamic-catalogs) section of the installation guide for full details.
 
 ---
 

@@ -210,8 +210,8 @@ The following table lists the configurable parameters of the Trino chart and the
 | `server.config.query.maxMemoryPerNode`              | The maximum amount of user memory a query can use on a worker. User memory is allocated during an execution for things that are directly attributable to, or controllable by, a user query. For example, memory used by hash tables built during an execution, memory used during sorting, and so on. When the user memory allocation of a query on any worker hits this limit, it is killed.                    | `"1GB"`                                              |
 | `server.config.memory.heapHeadroomPerNode`          | The amount of memory set aside as headroom/buffer in the JVM heap for allocations that are not tracked by Trino.                                                                                                                                                                                                                                                                                                 | `"1GB"`                                              |
 | `server.exchangeManager`                       |                Mandatory [exchange manager configuration](https://trino.io/docs/current/admin/fault-tolerant-execution.html#id1). Used to set the name and location(s) of the spooling storage destination. To enable fault-tolerant execution, set the `retry-policy` property in `additionalConfigProperties`. Additional exchange manager configurations can be added to `additionalExchangeManagerProperties`.                                                                                                                                                                                                                                             | `{}`                                       |
-| `server.workerExtraConfig`                          | The additional configurations to be added to the `config.properties` file of the workers.                                                                                                                                                                                                                                                                                                                        | `""`                                                 |
-| `server.coordinatorExtraConfig`                     | The additional configurations to be added to the `config.properties` file of the coordinator.                                                                                                                                                                                                                                                                                                                    | `""`                                                 |
+| `server.workerExtraConfig`                          | The additional configurations to be added to the `config.properties` file of the workers. Default enables dynamic catalog management.                                                                                                                                                                                                                                                                             | `catalog.management=dynamic`                         |
+| `server.coordinatorExtraConfig`                     | The additional configurations to be added to the `config.properties` file of the coordinator. Default enables dynamic catalog management and preserves `http-server.process-forwarded=IGNORE`.                                                                                                                                                                                                                    | see values.yaml                                      |
 | `auth.passwordAuth`                                 | The username and password for authentication type PASSWORD.                                                                                                                                                                                                                                                                                                                                                      | `""`                                                 |
 | `server.autoscaling.enabled`                        | It enables autoscaling for worker pods.                                                                                                                                                                                                                                                                                                                                                                          | `false`                                              |
 | `server.autoscaling.maxReplicas`                    | It specifies the maximum number of worker pods when autoscaling is enabled.                                                                                                                                                                                                                                                                                                                                      | `5`                                                  |
@@ -242,7 +242,7 @@ The following table lists the configurable parameters of the Trino chart and the
 | `secretMounts`                                      | An array of Kubernetes secrets to mount into coordinator and worker pods. Each element should have the name, secretName, and path (where to mount) properties.                                                                                                                                                                                                                                                   | `[]`                                                 |
 | `coordinator.deployment.progressDeadlineSeconds`                       |   The maximum time in seconds for a deployment to make progress before it is considered failed. The deployment controller continues to process failed deployments and a condition with a ProgressDeadlineExceeded reason is surfaced in the deployment status.                                                                                                          | `600`                                            |
 | `coordinator.deployment.revisionHistoryLimit`                       |     The number of old ReplicaSets to retain to allow rollback.                                                                                                         | `10`                                            |
-| `coordinator.deployment.strategy`                       |     The deployment strategy to use to replace the existing pods with new ones.                                                                                                         | `{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"}`                                            |
+| `coordinator.deployment.strategy`                       |     The deployment strategy to use to replace the existing pods with new ones. Defaults to `Recreate` because the dynamic catalog PVC is `ReadWriteOnce` and cannot be mounted by two coordinator pods at the same time.                                                                                                         | `{"type":"Recreate"}`                                            |
 | `coordinator.jvm.maxHeapSize`                       | The coordinator's JVM maximum heap size. Typically, the value representing 70 to 85 percent of the total available memory is recommended.                                                                                                                                                                                                                                                                        | `"1638M"`                                            |
 | `coordinator.jvm.gcMethod.type`                     | The JVM GC type for the coordinator. It should be set as a JVM command line option.                                                                                                                                                                                                                                                                                                                              | `"UseG1GC"`                                          |
 | `coordinator.jvm.gcMethod.g1.heapRegionSize`        | It sets the JVM GC1 heap region size for the coordinator.                                                                                                                                                                                                                                                                                                                                                        | `"32M"`                                              |
@@ -283,7 +283,7 @@ The following table lists the configurable parameters of the Trino chart and the
 | `networkPolicy.ingress`                                    |    Additional ingress rules to apply to the Trino pods.                                                                                                                                                                                                                                                                                                                                                                                                                 |`[]`|
 | `networkPolicy.egress`                                    |      Egress rules to apply to the Trino pods.                                                                                                                                                                                                                                                                                                                                                                                                                 |`[]`|
 | `resourceGroups`                                    |                                                                                                                                                                                                                                                                                                                                                                                                                  |`{}`|
-| `dynamicCatalogPVC.enabled`                         | Set to `true` to create a PersistentVolumeClaim for the coordinator's catalog directory, required when using dynamic catalogs with `catalog.store=file`. See [Dynamic Catalogs (Experimental)](#dynamic-catalogs-experimental).                                                                                                                                                                                  | `false`                                              |
+| `dynamicCatalogPVC.enabled`                         | Create a PersistentVolumeClaim for the coordinator's catalog directory. Enabled by default; the chart mounts it automatically and creates `catalog-store.properties`. Set to `false` to use static catalog management only. See [Dynamic Catalogs](#dynamic-catalogs).                                                                                                                                                                                  | `true`                                               |
 | `dynamicCatalogPVC.storageClass`                    | StorageClass for the PVC (can be templated). Leave empty to use the cluster default.                                                                                                                                                                                                                                                                                                                                                | `""`                                                 |
 | `dynamicCatalogPVC.accessMode`                      | Access mode for the PVC.                                                                                                                                                                                                                                                                                                                                                                                         | `"ReadWriteOnce"`                                    |
 | `dynamicCatalogPVC.size`                            | Storage size for the PVC.                                                                                                                                                                                                                                                                                                                                                                                        | `"1Gi"`                                              |
@@ -839,13 +839,13 @@ Trino has been configured to redirect all logs, that were previously stored in t
    - http-server.log.enabled=false
    - http-server.log.console.enabled=true  
  ```
-## Dynamic Catalogs (Experimental)
+## Dynamic Catalogs
 
 > **Warning**: Dynamic catalog management is an **experimental** Trino feature and should be used with caution in production environments.
 >
 > **Security notice**: `CREATE CATALOG` and `DROP CATALOG` statements are executed as regular SQL queries. This means that **connection credentials supplied in the `CREATE CATALOG` statements, including passwords are visible in plain text in the Trino Web UI query history** and in the query logs. Ensure that access to the Trino UI and logs is appropriately restricted before enabling this feature.
 
-Dynamic catalogs allow catalogs to be created and dropped at runtime via SQL, without restarting Trino or modifying `values.yaml`:
+Dynamic catalogs are **enabled by default** in this chart. They allow catalogs to be created and dropped at runtime via SQL, without restarting Trino or modifying `values.yaml`:
 
 ```sql
 CREATE CATALOG my_catalog USING postgresql WITH ( ... );
@@ -856,89 +856,80 @@ For more information, refer to the _Trino catalog properties documentation_ at [
 
 ### How It Works
 
-When `catalog.store=file` is configured, Trino reads and writes catalog `.properties` files to the coordinator's catalog directory (`/etc/trino/catalog`). As the coordinator runs with a read-only root filesystem, a PersistentVolumeClaim must be mounted at that path to provide writable storage. The PVC ensures catalog definitions persist across coordinator restarts.
+When `catalog.store=file` is configured, Trino reads and writes catalog `.properties` files to the coordinator's catalog directory (`/etc/trino/catalog`). As the coordinator runs with a read-only root filesystem, a PersistentVolumeClaim is mounted at that path to provide writable storage. The PVC ensures catalog definitions persist across coordinator restarts.
 
-The Qubership platform chart provides the `dynamicCatalogPVC` parameter group to create this PVC. The remaining wiring such as mounting the PVC, registering the catalog directory, and enabling dynamic management — is done via standard chart extension parameters (`coordinator.additionalVolumes`, `coordinator.additionalVolumeMounts`, `coordinator.additionalConfigFiles`, `server.coordinatorExtraConfig`).
+By default, the chart:
 
-### Enabling Dynamic Catalogs
+* Creates the `dynamicCatalogPVC` PersistentVolumeClaim.
+* Mounts it at `/etc/trino/catalog` in the coordinator pod.
+* Adds `catalog-store.properties` pointing to `/etc/trino/catalog`.
+* Sets `catalog.management=dynamic`, `catalog.store=file`, and `catalog.prune.update-interval=5s` in the coordinator's `config.properties`.
+* Sets `catalog.management=dynamic` in the workers' `config.properties`.
+* Uses `coordinator.deployment.strategy.type: Recreate`, because the default `ReadWriteOnce` PVC cannot be mounted by two coordinator pods at the same time.
+* Skips mounting the static catalog Secret when dynamic catalog is enabled, to avoid a volume conflict at `/etc/trino/catalog`.
 
-The following values enable dynamic catalogs with a file-backed PVC:
+### Disabling Dynamic Catalogs
+
+To use static catalogs defined in `values.yaml` instead, disable `dynamicCatalogPVC`:
 
 ```yaml
-# Null out the default static catalogs so the chart does not mount the catalog
-# Secret at /etc/trino/catalog, which would conflict with the PVC mount below.
-# In dynamic mode, catalogs are managed via SQL instead.
-catalogs:
-  tpch: ~
-  tpcds: ~
-  hive: ~
+dynamicCatalogPVC:
+  enabled: false
 
-# Create a PVC for the coordinator's catalog directory so catalog definitions
-# persist across coordinator restarts.
+# Restore a RollingUpdate strategy if desired (Recreate is only required for the dynamic catalog PVC)
+coordinator:
+  deployment:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+
+# Remove the dynamic catalog settings from the default coordinator/worker extra config
+# and define static catalogs instead.
+server:
+  coordinatorExtraConfig: |
+    http-server.process-forwarded=IGNORE
+  workerExtraConfig: ""
+
+catalogs:
+  tpch: |
+    connector.name=tpch
+    tpch.splits-per-node=4
+  tpcds: |
+    connector.name=tpcds
+    tpcds.splits-per-node=4
+```
+
+### Overriding the Dynamic Catalog Configuration
+
+If you need to change the PVC storage class, size, access mode, or reuse an existing claim, override `dynamicCatalogPVC`:
+
+```yaml
 dynamicCatalogPVC:
   enabled: true
+  storageClass: ""
   accessMode: ReadWriteOnce
   size: 1Gi
-  storageClass: ""       # leave empty to use the cluster default
-  existingClaim: ""      # set to reuse an existing PVC instead of creating one
+  existingClaim: ""
+```
+
+If your storage class supports `ReadWriteMany`, you can change `dynamicCatalogPVC.accessMode` to `ReadWriteMany` and restore `RollingUpdate`:
+
+```yaml
+dynamicCatalogPVC:
+  accessMode: ReadWriteMany
 
 coordinator:
   deployment:
-    # The coordinator Deployment runs a single replica. With the default RollingUpdate
-    # strategy, Kubernetes starts the new coordinator pod before removing the old one, and
-    # both try to mount the ReadWriteOnce dynamicCatalogPVC at once. Recreate avoids this by
-    # terminating the old pod first.
-    #
-    # rollingUpdate must be nulled out too: the chart default sets it alongside
-    # type: RollingUpdate, and Helm merges maps rather than replacing them, so it survives
-    # unless cleared. Kubernetes rejects a Deployment that sets rollingUpdate while
-    # type is Recreate.
     strategy:
-      type: Recreate
-      rollingUpdate: ~
-
-  # Mount the PVC at /etc/trino/catalog so Trino reads and writes catalog files there.
-  additionalVolumes:
-    - name: dynamic-catalog
-      persistentVolumeClaim:
-        claimName: trino-dynamic-catalog   # <release-name>-dynamic-catalog; adjust if your release name differs
-
-  additionalVolumeMounts:
-    - name: dynamic-catalog
-      mountPath: /etc/trino/catalog
-
-  # catalog-store.properties is read by FileCatalogStoreConfig and sets the
-  # directory Trino uses for catalog property files.
-  additionalConfigFiles:
-    catalog-store.properties: |
-      catalog.config-dir=/etc/trino/catalog
-
-server:
-  # catalog.management and catalog.store go into config.properties.
-  # catalog.prune.update-interval controls how often dropped catalogs are cleaned up.
-  # http-server.process-forwarded=IGNORE is the chart default and must be preserved.
-  coordinatorExtraConfig: |
-    http-server.process-forwarded=IGNORE
-    catalog.management=dynamic
-    catalog.store=file
-    catalog.prune.update-interval=5s
-
-  # Workers don't read catalog.store themselves; they accept catalog properties pushed from
-  # the coordinator when it dispatches a task, and only do so if catalog.management=dynamic
-  # is set here too.
-  workerExtraConfig: |
-    catalog.management=dynamic
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
 ```
 
-**Note**: The default `catalogs` values (`tpch`, `tpcds`, `hive`) must be explicitly nulled out as shown above. If any static catalog remains defined, the chart mounts the catalog Secret at `/etc/trino/catalog`, which conflicts with the PVC mount and will prevent the coordinator pod from starting.
-
-**Note**: `server.coordinatorExtraConfig` replaces the chart default entirely (Helm does not merge strings). The default value `http-server.process-forwarded=IGNORE` must be included alongside the dynamic catalog properties as shown above. The same goes for all other properties that you want to include in `server.coordinatorExtraConfig`.
-
-**Note**: The `server.workerExtraConfig` must include `catalog.management=dynamic`. If this setting is omitted, queries that rely on a dynamically created catalog will fail after the coordinator assigns a task to a worker, because the worker's `StaticCatalogManager` cannot locate the catalog. Workers do not require the PVC or any volume mounts; only this configuration is necessary.
-
-**Note**: The `coordinator.deployment.strategy.type` must be set to `Recreate` (as shown above). The chart's default strategy, `RollingUpdate`, creates the new coordinator pod before terminating the old one. With a single-replica coordinator, both pods attempt to mount the same `ReadWriteOnce` `dynamicCatalogPVC` simultaneously, resulting in "Volume is already in use" or "Multi-Attach" errors and preventing the new pod from becoming ready. If your storage class supports `ReadWriteMany`, you can change `dynamicCatalogPVC.accessMode` to `ReadWriteMany` and retain the `RollingUpdate` strategy.
-
-**Note**: `coordinator.deployment.strategy.rollingUpdate` must be nulled out alongside `type: Recreate`, as shown above. The chart's default `values.yaml` sets `rollingUpdate` alongside `type: RollingUpdate`, and Helm merges override maps into chart defaults instead of replacing them. Setting only `type: Recreate` leaves the default `rollingUpdate` block in place, and the Kubernetes API then rejects the Deployment with `spec.strategy.rollingUpdate: Forbidden: may not be specified when strategy type is 'Recreate'`.
+**Note**: If you define static catalogs in `values.yaml` while `dynamicCatalogPVC.enabled` is `true`, the chart does not mount the static catalog Secret at `/etc/trino/catalog`, because the PVC is mounted at the same path. Static catalog definitions are ignored when dynamic catalog management is enabled.
 
 ### Creating a Catalog at Runtime
 
