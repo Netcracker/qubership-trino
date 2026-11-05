@@ -211,7 +211,7 @@ The following table lists the configurable parameters of the Trino chart and the
 | `server.config.memory.heapHeadroomPerNode`          | The amount of memory set aside as headroom/buffer in the JVM heap for allocations that are not tracked by Trino.                                                                                                                                                                                                                                                                                                 | `"1GB"`                                              |
 | `server.exchangeManager`                       |                Mandatory [exchange manager configuration](https://trino.io/docs/current/admin/fault-tolerant-execution.html#id1). Used to set the name and location(s) of the spooling storage destination. To enable fault-tolerant execution, set the `retry-policy` property in `additionalConfigProperties`. Additional exchange manager configurations can be added to `additionalExchangeManagerProperties`.                                                                                                                                                                                                                                             | `{}`                                       |
 | `server.workerExtraConfig`                          | The additional configurations to be added to the `config.properties` file of the workers.                                                                                                                                                                                                                                                                                                                        | `""`                                                 |
-| `server.coordinatorExtraConfig`                     | The additional configurations to be added to the `config.properties` file of the coordinator.                                                                                                                                                                                                                                                                                                                    | `""`                                                 |
+| `server.coordinatorExtraConfig`                     | The additional configurations to be added to the `config.properties` file of the coordinator.                                                                                                                                                                                                                                                                                                                    | see values.yaml                                      |
 | `auth.passwordAuth`                                 | The username and password for authentication type PASSWORD.                                                                                                                                                                                                                                                                                                                                                      | `""`                                                 |
 | `server.autoscaling.enabled`                        | It enables autoscaling for worker pods.                                                                                                                                                                                                                                                                                                                                                                          | `false`                                              |
 | `server.autoscaling.maxReplicas`                    | It specifies the maximum number of worker pods when autoscaling is enabled.                                                                                                                                                                                                                                                                                                                                      | `5`                                                  |
@@ -242,7 +242,7 @@ The following table lists the configurable parameters of the Trino chart and the
 | `secretMounts`                                      | An array of Kubernetes secrets to mount into coordinator and worker pods. Each element should have the name, secretName, and path (where to mount) properties.                                                                                                                                                                                                                                                   | `[]`                                                 |
 | `coordinator.deployment.progressDeadlineSeconds`                       |   The maximum time in seconds for a deployment to make progress before it is considered failed. The deployment controller continues to process failed deployments and a condition with a ProgressDeadlineExceeded reason is surfaced in the deployment status.                                                                                                          | `600`                                            |
 | `coordinator.deployment.revisionHistoryLimit`                       |     The number of old ReplicaSets to retain to allow rollback.                                                                                                         | `10`                                            |
-| `coordinator.deployment.strategy`                       |     The deployment strategy to use to replace the existing pods with new ones.                                                                                                         | `{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"}`                                            |
+| `coordinator.deployment.strategy`                       |     The deployment strategy to use to replace the existing pods with new ones. Defaults to `Recreate` because the dynamic catalog PVC is `ReadWriteOnce` and cannot be mounted by two coordinator pods at the same time.                                                                                                         | `{"type":"Recreate"}`                                            |
 | `coordinator.jvm.maxHeapSize`                       | The coordinator's JVM maximum heap size. Typically, the value representing 70 to 85 percent of the total available memory is recommended.                                                                                                                                                                                                                                                                        | `"1638M"`                                            |
 | `coordinator.jvm.gcMethod.type`                     | The JVM GC type for the coordinator. It should be set as a JVM command line option.                                                                                                                                                                                                                                                                                                                              | `"UseG1GC"`                                          |
 | `coordinator.jvm.gcMethod.g1.heapRegionSize`        | It sets the JVM GC1 heap region size for the coordinator.                                                                                                                                                                                                                                                                                                                                                        | `"32M"`                                              |
@@ -283,7 +283,7 @@ The following table lists the configurable parameters of the Trino chart and the
 | `networkPolicy.ingress`                                    |    Additional ingress rules to apply to the Trino pods.                                                                                                                                                                                                                                                                                                                                                                                                                 |`[]`|
 | `networkPolicy.egress`                                    |      Egress rules to apply to the Trino pods.                                                                                                                                                                                                                                                                                                                                                                                                                 |`[]`|
 | `resourceGroups`                                    |                                                                                                                                                                                                                                                                                                                                                                                                                  |`{}`|
-| `dynamicCatalogPVC.enabled`                         | Set to `true` to create a PersistentVolumeClaim for the coordinator's catalog directory, required when using dynamic catalogs with `catalog.store=file`. See [Dynamic Catalogs (Experimental)](#dynamic-catalogs-experimental).                                                                                                                                                                                  | `false`                                              |
+| `dynamicCatalogPVC.enabled`                         | Create a PersistentVolumeClaim for the coordinator's catalog directory. Enabled by default; the chart mounts it automatically and creates `catalog-store.properties`. Set to `false` to use static catalog management only. See [Dynamic Catalogs](#dynamic-catalogs).                                                                                                                                                                                  | `true`                                               |
 | `dynamicCatalogPVC.storageClass`                    | StorageClass for the PVC (can be templated). Leave empty to use the cluster default.                                                                                                                                                                                                                                                                                                                                                | `""`                                                 |
 | `dynamicCatalogPVC.accessMode`                      | Access mode for the PVC.                                                                                                                                                                                                                                                                                                                                                                                         | `"ReadWriteOnce"`                                    |
 | `dynamicCatalogPVC.size`                            | Storage size for the PVC.                                                                                                                                                                                                                                                                                                                                                                                        | `"1Gi"`                                              |
@@ -594,11 +594,18 @@ coordinator:
     - name: tls-custom-cert
       secret:
         secretName: mysslcert
+# If dynamic catalogs are enabled, dynamic-catalog volume needs to added
+    - name: dynamic-catalog
+      persistentVolumeClaim:
+        claimName: '{{ template "trino.fullname" . }}-dynamic-catalog'        
   additionalVolumeMounts:
     - name: tls-custom-cert
       mountPath: /home/trino/trustcerts/mysslcert.crt
       subPath: mysslcert.crt
       readOnly: true
+# If dynamic catalogs are enabled, dynamic-catalog volume needs to be mounted at /etc/trino/catalog       
+    - name: dynamic-catalog
+      mountPath: /etc/trino/catalog       
 worker:
   additionalVolumes:
     - name: tls-custom-cert
@@ -845,7 +852,7 @@ Trino has been configured to redirect all logs, that were previously stored in t
 >
 > **Security notice**: `CREATE CATALOG` and `DROP CATALOG` statements are executed as regular SQL queries. This means that **connection credentials supplied in the `CREATE CATALOG` statements, including passwords are visible in plain text in the Trino Web UI query history** and in the query logs. Ensure that access to the Trino UI and logs is appropriately restricted before enabling this feature.
 
-Dynamic catalogs allow catalogs to be created and dropped at runtime via SQL, without restarting Trino or modifying `values.yaml`:
+Dynamic catalogs are **enabled by default** in this chart. They allow catalogs to be created and dropped at runtime via SQL, without restarting Trino or modifying `values.yaml`:
 
 ```sql
 CREATE CATALOG my_catalog USING postgresql WITH ( ... );
@@ -970,6 +977,139 @@ DROP CATALOG my_postgres;
 **Note**: With `catalog.store=file`, the catalog definition is written to `/etc/trino/catalog/my_postgres.properties` on the PVC and survives coordinator restarts. With `catalog.store=memory` the catalog exists only until the coordinator process is completed.
 
 **Security reminder**: The `connection-password` value in the `CREATE CATALOG` statement is stored unencrypted in the Trino query history and is visible to anyone with access to the Trino Web UI. Restrict the UI access accordingly.
+
+### Disabling Dynamic Catalogs
+
+To use static catalogs defined in `values.yaml` instead, disable `dynamicCatalogPVC`:
+
+```yaml
+dynamicCatalogPVC:
+  enabled: false
+
+# Restore a RollingUpdate strategy if desired (Recreate is only required for the dynamic catalog PVC)
+coordinator:
+  deployment:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+
+# Remove the dynamic catalog settings from the default coordinator/worker extra config
+# and define static catalogs instead.
+server:
+  coordinatorExtraConfig: |
+    http-server.process-forwarded=IGNORE
+  workerExtraConfig: ""
+
+catalogs:
+  tpch: |
+    connector.name=tpch
+    tpch.splits-per-node=4
+  tpcds: |
+    connector.name=tpcds
+    tpcds.splits-per-node=4
+  hive: |
+    connector.name=hive
+    hive.metastore.uri={{ include "hive.metastore.uri" . }}
+    hive.max-partitions-per-scan=1000000
+    hive.storage-format=ORC
+    hive.non-managed-table-writes-enabled=true
+    fs.native-s3.enabled=true
+    s3.endpoint={{ include "s3.endpoint" . }}
+    s3.region={{ .Values.s3.region }}
+    s3.aws-access-key={{ include "s3.accesskey" . }}
+    s3.aws-secret-key={{ include "s3.secretkey" . }}
+    s3.path-style-access=true
+    s3.max-connections=100  
+```
+
+### Migrating from Static Catalogs
+
+If your current parameters define only static catalogs and do not use Hive, for example:
+
+```yaml
+catalogs:
+  tpch: null
+  tpcds: null
+  hive: null
+  testrino1: |
+    connector.name=postgresql
+    connection-url=jdbc:postgresql://pg1.address:5432/database1
+    connection-user=pg1user
+    connection-password=pg1password
+  testrino2: |
+    connector.name=postgresql
+    connection-url=jdbc:postgresql://pg2.address:5432/database2
+    connection-user=pg2user
+    connection-password=pg2password
+```
+
+With dynamic catalogs enabled by default, static catalog definitions in `values.yaml` are ignored because the chart mounts the dynamic catalog PVC at `/etc/trino/catalog` instead of the static catalog Secret. To keep the same catalogs, choose one of the following options.
+
+**Option 1: Move the catalogs to dynamic SQL statements (experimental)**
+
+Remove the static catalog entries from the parameters and create the catalogs at runtime with SQL after Trino starts:
+
+```yaml
+catalogs: {}
+dynamicCatalogPVC:
+  enabled: true
+  storageClass: ""
+```
+
+```sql
+CREATE CATALOG testrino1 USING postgresql
+WITH (
+  "connection-url" = 'jdbc:postgresql://pg1.address:5432/database1',
+  "connection-user" = 'pg1user',
+  "connection-password" = 'pg1password'
+);
+
+CREATE CATALOG testrino2 USING postgresql
+WITH (
+  "connection-url" = 'jdbc:postgresql://pg2.address:5432/database2',
+  "connection-user" = 'pg2user',
+  "connection-password" = 'pg2password'
+);
+```
+
+The catalog definitions are persisted on the coordinator's PVC and survive restarts.
+
+**Option 2: Keep static catalogs and disable dynamic catalogs**
+
+If you want to keep the existing static catalog workflow, disable dynamic catalogs as described in [Disabling Dynamic Catalogs](#disabling-dynamic-catalogs) and keep the `catalogs` block unchanged.
+
+### Overriding the Dynamic Catalog Configuration
+
+If you need to change the PVC storage class, size, access mode, or reuse an existing claim, override `dynamicCatalogPVC`:
+
+```yaml
+dynamicCatalogPVC:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  existingClaim: ""
+```
+
+If your storage class supports `ReadWriteMany`, you can change `dynamicCatalogPVC.accessMode` to `ReadWriteMany` and restore `RollingUpdate`:
+
+```yaml
+dynamicCatalogPVC:
+  accessMode: ReadWriteMany
+
+coordinator:
+  deployment:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+```
+
+**Note**: If you define static catalogs in `values.yaml` while `dynamicCatalogPVC.enabled` is `true`, the chart does not create or mount the static catalog Secret at `/etc/trino/catalog`, because the PVC is mounted at the same path. Static catalog definitions are ignored when dynamic catalog management is enabled.
+
 
 ## Using SeaweedFS with the Hive Connector
 

@@ -596,13 +596,13 @@
         },
         "workerExtraConfig": {
           "type": "string",
-          "default": "",
+          "default": "catalog.management=dynamic\n",
           "description": "Extra worker configuration"
         },
         "coordinatorExtraConfig": {
           "type": "string",
           "description": "Extra coordinator configuration",
-          "default": "http-server.process-forwarded=IGNORE\n"
+          "default": "http-server.process-forwarded=IGNORE\ncatalog.management=dynamic\ncatalog.store=file\ncatalog.prune.update-interval=5s\n"
         },
         "autoscaling": {
           "type": "object",
@@ -850,11 +850,7 @@
     },
     "catalogs": {
       "type": "object",
-      "default": {
-        "tpch": "connector.name=tpch\ntpch.splits-per-node=4",
-        "tpcds": "connector.name=tpcds\ntpcds.splits-per-node=4",
-        "hive": "connector.name=hive\nhive.metastore.uri={{ include \"hive.metastore.uri\" . }}\nhive.max-partitions-per-scan=1000000\nhive.storage-format=ORC\nhive.non-managed-table-writes-enabled=true\nfs.native-s3.enabled=true\ns3.endpoint={{ include \"s3.endpoint\" . }}\ns3.region={{ .Values.s3.region }}\ns3.aws-access-key={{ include \"s3.accesskey\" . }}\ns3.aws-secret-key={{ include \"s3.secretkey\" . }}\ns3.path-style-access=true\ns3.max-connections=100"
-      },
+      "default": {},
       "description": "Catalog configuration"
     },
     "additionalCatalogs": {
@@ -864,11 +860,11 @@
     },
     "dynamicCatalogPVC": {
       "type": "object",
-      "description": "PVC for the coordinator catalog directory, used with experimental dynamic catalog management",
+      "description": "PVC for the coordinator catalog directory, used with experimental dynamic catalog management. Enabled by default and mounted at /etc/trino/catalog by coordinator.additionalVolumes/additionalVolumeMounts.",
       "properties": {
         "enabled": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Set to true to create the PVC"
         },
         "storageClass": {
@@ -1111,11 +1107,13 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "default": "RollingUpdate",
-                  "description": "Deployment strategy type"
+                  "default": "Recreate",
+                  "description": "Deployment strategy type. Recreate by default because the dynamic catalog PVC is ReadWriteOnce and cannot be mounted by two coordinator pods at once."
                 },
                 "rollingUpdate": {
-                  "type": "object",
+                  "type": ["object", "null"],
+                  "default": null,
+                  "description": "Rolling update settings. Must be null when type is Recreate.",
                   "properties": {
                     "maxSurge": {
                       "type": "string",
@@ -1279,17 +1277,32 @@
         },
         "additionalConfigFiles": {
           "type": "object",
-          "default": {},
+          "default": {
+            "core-site.xml": "<configuration>\n  <property><name>fs.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedFileSystem</value></property>\n  <property><name>fs.AbstractFileSystem.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedAbstractFileSystem</value></property>\n</configuration>\n",
+            "catalog-store.properties": "catalog.config-dir=/etc/trino/catalog\n"
+          },
           "description": "Additional config files"
         },
         "additionalVolumes": {
           "type": "array",
-          "default": [],
+          "default": [
+            {
+              "name": "dynamic-catalog",
+              "persistentVolumeClaim": {
+                "claimName": "{{ template \"trino.fullname\" . }}-dynamic-catalog"
+              }
+            }
+          ],
           "description": "Additional volumes"
         },
         "additionalVolumeMounts": {
           "type": "array",
-          "default": [],
+          "default": [
+            {
+              "name": "dynamic-catalog",
+              "mountPath": "/etc/trino/catalog"
+            }
+          ],
           "description": "Additional volume mounts"
         },
         "annotations": {
@@ -1555,7 +1568,9 @@
         },
         "additionalConfigFiles": {
           "type": "object",
-          "default": {},
+          "default": {
+            "core-site.xml": "<configuration>\n  <property><name>fs.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedFileSystem</value></property>\n  <property><name>fs.AbstractFileSystem.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedAbstractFileSystem</value></property>\n</configuration>\n"
+          },
           "description": "Additional config files"
         },
         "additionalVolumes": {
