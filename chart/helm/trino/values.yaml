@@ -85,9 +85,13 @@ server:
   #   - exchange.source-concurrent-readers=4
   # ```
 
-  workerExtraConfig: ""
+  workerExtraConfig: |
+    catalog.management=dynamic
   coordinatorExtraConfig: |
     http-server.process-forwarded=IGNORE
+    catalog.management=dynamic
+    catalog.store=file
+    catalog.prune.update-interval=5s
   # server.autoscaling -- Configure [Horizontal Pod Autoscaling](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
   # for workers (`server.keda.enabled` must be `false`).
   autoscaling:
@@ -626,13 +630,13 @@ hive:
   host: hive-metastore.hive-metastore.svc
   port: 9083
 
-catalogs:
-  tpch: |
-    connector.name=tpch
-    tpch.splits-per-node=4
-  tpcds: |
-    connector.name=tpcds
-    tpcds.splits-per-node=4
+catalogs: {}
+#  tpch: |
+#    connector.name=tpch
+#    tpch.splits-per-node=4
+#  tpcds: |
+#    connector.name=tpcds
+#    tpcds.splits-per-node=4
 
 #  postgres: |
 #    connector.name=postgresql
@@ -640,19 +644,19 @@ catalogs:
 #    connection-user=postgres
 #    connection-password=password
 
-  hive: |
-    connector.name=hive
-    hive.metastore.uri={{ include "hive.metastore.uri" . }}
-    hive.max-partitions-per-scan=1000000
-    hive.storage-format=ORC
-    hive.non-managed-table-writes-enabled=true
-    fs.native-s3.enabled=true
-    s3.endpoint={{ include "s3.endpoint" . }}
-    s3.region={{ .Values.s3.region }}
-    s3.aws-access-key={{ include "s3.accesskey" . }}
-    s3.aws-secret-key={{ include "s3.secretkey" . }}
-    s3.path-style-access=true
-    s3.max-connections=100
+#  hive: |
+#    connector.name=hive
+#    hive.metastore.uri={{ include "hive.metastore.uri" . }}
+#    hive.max-partitions-per-scan=1000000
+#    hive.storage-format=ORC
+#    hive.non-managed-table-writes-enabled=true
+#    fs.native-s3.enabled=true
+#    s3.endpoint={{ include "s3.endpoint" . }}
+#    s3.region={{ .Values.s3.region }}
+#    s3.aws-access-key={{ include "s3.accesskey" . }}
+#    s3.aws-secret-key={{ include "s3.secretkey" . }}
+#    s3.path-style-access=true
+#    s3.max-connections=100
 
 # catalogs -- Configure
 # [catalogs](https://trino.io/docs/current/installation/deployment.html#catalog-properties).
@@ -693,7 +697,7 @@ additionalCatalogs: {}
 # ```
 dynamicCatalogPVC:
   # dynamicCatalogPVC.enabled -- Set to true to create the PVC.
-  enabled: false
+  enabled: true
   # dynamicCatalogPVC.storageClass -- StorageClass for the PVC (can be templated). Leave empty to use the cluster default.
   storageClass: ""
   # dynamicCatalogPVC.accessMode -- Access mode for the PVC.
@@ -937,11 +941,18 @@ coordinator:
     revisionHistoryLimit: 10
     # coordinator.deployment.revisionHistoryLimit -- The number of old ReplicaSets to retain to allow rollback.
 
+    # The coordinator Deployment runs a single replica. With the default RollingUpdate
+    # strategy, Kubernetes starts the new coordinator pod before removing the old one, and
+    # both try to mount the ReadWriteOnce dynamicCatalogPVC at once. Recreate avoids this by
+    # terminating the old pod first.
+    #
+    # rollingUpdate must be nulled out too: the chart default sets it alongside
+    # type: RollingUpdate, and Helm merges maps rather than replacing them, so it survives
+    # unless cleared. Kubernetes rejects a Deployment that sets rollingUpdate while
+    # type is Recreate.
     strategy:
-      type: RollingUpdate
-      rollingUpdate:
-        maxSurge: 25%
-        maxUnavailable: 25%
+      type: Recreate
+      rollingUpdate: ~
     # coordinator.deployment.strategy -- The deployment strategy to use to replace existing pods with new ones.
 
   jvm:
@@ -1064,7 +1075,14 @@ coordinator:
   #    ip: 1.1.1.1
   # ```
 
-  additionalConfigFiles: {}
+  additionalConfigFiles:
+    core-site.xml: >
+      <configuration>
+        <property><name>fs.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedFileSystem</value></property>
+        <property><name>fs.AbstractFileSystem.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedAbstractFileSystem</value></property>
+      </configuration>
+    catalog-store.properties: |
+      catalog.config-dir=/etc/trino/catalog
   # coordinator.additionalConfigFiles -- Additional config files placed in the default configuration directory.
   # Supports templating the files' contents with `tpl`.
   # @raw
@@ -1074,7 +1092,10 @@ coordinator:
   #   secret-value={{- .Values.someValue }}
   # ```
 
-  additionalVolumes: []
+  additionalVolumes:
+    - name: dynamic-catalog
+      persistentVolumeClaim:
+        claimName: '{{ template "trino.fullname" . }}-dynamic-catalog'
 ## TLS
 #    - name: tls-custom-cert
 #      secret:
@@ -1091,7 +1112,9 @@ coordinator:
   #    emptyDir: {}
   # ```
 
-  additionalVolumeMounts: []
+  additionalVolumeMounts:
+    - name: dynamic-catalog
+      mountPath: /etc/trino/catalog
 ## TLS
 #    - name: tls-custom-cert
 #      mountPath: /home/trino/trustcerts/mysslcert.crt
@@ -1370,7 +1393,12 @@ worker:
   #         app.kubernetes.io/component: worker
   # ```
 
-  additionalConfigFiles: {}
+  additionalConfigFiles:
+    core-site.xml: >
+      <configuration>
+        <property><name>fs.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedFileSystem</value></property>
+        <property><name>fs.AbstractFileSystem.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedAbstractFileSystem</value></property>
+      </configuration>
   # worker.additionalConfigFiles -- Additional config files placed in the default configuration directory.
   # Supports templating the files' contents with `tpl`.
   # @raw

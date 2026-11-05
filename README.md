@@ -104,6 +104,11 @@ server:
       maxMemory: "2GB"
   coordinatorExtraConfig: |
     http-server.process-forwarded=IGNORE
+    catalog.management=dynamic
+    catalog.store=file
+    catalog.prune.update-interval=5s
+  workerExtraConfig: |
+    catalog.management=dynamic  
 s3: 
   endpoint: http://minio.your.cloud.qubeship.com
   accesskey: minioaccesskey
@@ -113,20 +118,7 @@ s3:
 hive:
   host: hive-metastore.hive-metastore.svc
   port: 9083
-catalogs:
-  hive: |
-    connector.name=hive
-    hive.metastore.uri={{ include "hive.metastore.uri" . }}
-    hive.max-partitions-per-scan=1000000
-    hive.storage-format=ORC
-    hive.non-managed-table-writes-enabled=true
-    fs.native-s3.enabled=true
-    s3.endpoint={{ include "s3.endpoint" . }}
-    s3.region={{ .Values.s3.region }}
-    s3.aws-access-key={{ include "s3.accesskey" . }}
-    s3.aws-secret-key={{ include "s3.secretkey" . }}
-    s3.path-style-access=true
-    s3.max-connections=100
+catalogs: {}
  
 containerSecurityContext:
   runAsNonRoot: true
@@ -136,6 +128,25 @@ containerSecurityContext:
   readOnlyRootFilesystem: true  
 coordinator:
   priorityClassName: ~
+  deployment:
+    strategy:
+      type: Recreate
+      rollingUpdate: ~
+  additionalConfigFiles:
+    core-site.xml: >
+      <configuration>
+        <property><name>fs.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedFileSystem</value></property>
+        <property><name>fs.AbstractFileSystem.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedAbstractFileSystem</value></property>
+      </configuration>
+    catalog-store.properties: |
+      catalog.config-dir=/etc/trino/catalog   
+  additionalVolumes:
+    - name: dynamic-catalog
+      persistentVolumeClaim:
+        claimName: '{{ template "trino.fullname" . }}-dynamic-catalog'
+  additionalVolumeMounts:
+    - name: dynamic-catalog
+      mountPath: /etc/trino/catalog           
   
   jvm:
     maxHeapSize: "1638M"
@@ -150,6 +161,12 @@ worker:
   priorityClassName: ~
   jvm:
     maxHeapSize: "2457M"
+  additionalConfigFiles:
+    core-site.xml: >
+      <configuration>
+        <property><name>fs.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedFileSystem</value></property>
+        <property><name>fs.AbstractFileSystem.seaweedfs.impl</name><value>seaweed.hdfs.SeaweedAbstractFileSystem</value></property>
+      </configuration>  
     
    resources:
     limits:
@@ -184,11 +201,12 @@ tls:
     clusterIssuerName: common-cluster-issuer
 # Qubership custom change: dynamic catalog support
 dynamicCatalogPVC:
-  enabled: false
+  enabled: true
   storageClass: ""
   accessMode: ReadWriteOnce
   size: 1Gi
   existingClaim: ""
+
 ```
 
 ---
