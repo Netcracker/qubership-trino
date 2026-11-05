@@ -994,6 +994,22 @@ coordinator:
       rollingUpdate:
         maxSurge: 25%
         maxUnavailable: 25%
+    additionalVolumes:
+# To disable dynamic catalogs remove the dynamic-catalog additional volume
+#     - name: dynamic-catalog
+#       persistentVolumeClaim:
+#         claimName: trino-dynamic-catalog
+
+    additionalVolumeMounts:
+# To disable dynamic catalogs remove the dynamic-catalog additional volume mount   
+#     - name: dynamic-catalog
+#       mountPath: /etc/trino/catalog
+
+  additionalConfigFiles:
+# To disable dynamic catalogs remove the catalog-store.properties from additionalConfigFiles
+#   catalog-store.properties: |
+#     catalog.config-dir=/etc/trino/catalog
+    
 
 # Remove the dynamic catalog settings from the default coordinator/worker extra config
 # and define static catalogs instead.
