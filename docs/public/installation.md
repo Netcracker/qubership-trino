@@ -995,21 +995,20 @@ coordinator:
         maxSurge: 25%
         maxUnavailable: 25%
     additionalVolumes:
-# To disable dynamic catalogs remove the dynamic-catalog additional volume
+# To disable dynamic catalogs, remove the dynamic-catalog additional volume
 #     - name: dynamic-catalog
 #       persistentVolumeClaim:
 #         claimName: trino-dynamic-catalog
 
     additionalVolumeMounts:
-# To disable dynamic catalogs remove the dynamic-catalog additional volume mount   
+# To disable dynamic catalogs, remove the dynamic-catalog additional volume mount
 #     - name: dynamic-catalog
 #       mountPath: /etc/trino/catalog
 
   additionalConfigFiles:
-# To disable dynamic catalogs remove the catalog-store.properties from additionalConfigFiles
+# To disable dynamic catalogs, remove catalog-store.properties from additionalConfigFiles
 #   catalog-store.properties: |
 #     catalog.config-dir=/etc/trino/catalog
-    
 
 # Remove the dynamic catalog settings from the default coordinator/worker extra config
 # and define static catalogs instead.
@@ -1042,7 +1041,7 @@ catalogs:
 
 ### Migrating from Static Catalogs
 
-If your current parameters define only static catalogs and do not use Hive, for example:
+If your current parameters define only static catalogs and do not use Hive, as in the following example:
 
 ```yaml
 catalogs:
@@ -1098,7 +1097,7 @@ If you want to keep the existing static catalog workflow, disable dynamic catalo
 
 ### Overriding the Dynamic Catalog Configuration
 
-If you need to change the PVC storage class, size, access mode, or reuse an existing claim, override `dynamicCatalogPVC`:
+If you need to change the PVC storage class, size, or access mode, or reuse an existing claim, override `dynamicCatalogPVC`:
 
 ```yaml
 dynamicCatalogPVC:
@@ -1124,7 +1123,7 @@ coordinator:
         maxUnavailable: 25%
 ```
 
-**Note**: If you define static catalogs in `values.yaml` while `dynamicCatalogPVC.enabled` is `true`, the chart does not create or mount the static catalog Secret at `/etc/trino/catalog`, because the PVC is mounted at the same path. Static catalog definitions are ignored when dynamic catalog management is enabled.
+**Note**: If you define static catalogs in `values.yaml` while `dynamicCatalogPVC.enabled` is `true`, the chart does not create or mount the static catalog Secret at `/etc/trino/catalog` because the PVC is mounted at the same path. Static catalog definitions are ignored when dynamic catalog management is enabled.
 
 
 ## Using SeaweedFS with the Hive Connector
