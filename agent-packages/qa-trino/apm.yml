@@ -1,0 +1,11 @@
+name: qa-trino
+version: 1.0.0
+description: QA guidance for the Qubership Trino Helm deployment — verification when no automated tests exist, coordinator/worker topology, dynamic catalog management, TLS, authentication and the template fail guards.
+targets:
+- claude
+- copilot
+- cursor
+dependencies:
+  apm: []
+  mcp: []
+includes: auto
