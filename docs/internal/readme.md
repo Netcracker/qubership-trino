@@ -30,6 +30,7 @@ Trino authentication is different from most other services, so it's best to be f
 3) Verify that Trino can be deployed successfully and integrates with all dependent services
 4) If there are some problems with connections, trino connector documentation https://trino.io/docs/current/connector.html .
 5) Update documentation if needed.
+6) Update the pinned versions in the QA skill [qa-trino SKILL.md](/agent-packages/qa-trino/.apm/skills/qa-trino/SKILL.md): the "The component" paragraph repeats the upstream chart `appVersion` and chart version, and the template-guard table names a minimum Trino version (`438`). Grep the skill for the old version to be sure nothing else drifted.
 
 ## Useful links:
 
