@@ -43,9 +43,40 @@ RUN \
     mkdir -p /rootfs && \
     rpm -ql nss_wrapper-libs | tar --no-recursion -cf - -T - | tar -xf - -C /rootfs
 
+# Temurin JDK that replaces the one bundled in the Trino image, to fix CVE.
+# Remove this stage on the next trino update.
+FROM --platform=$BUILDPLATFORM alpine:latest AS jdk-download
+
+ARG TARGETARCH
+ARG TEMURIN_VERSION=25.0.5.1
+ARG TEMURIN_BUILD=2
+ARG TEMURIN_SHA256_AMD64=760f91b22c3efc9bd1b64ff950598231be82928cc807e30691a0e7a2995a62c0
+ARG TEMURIN_SHA256_ARM64=c37879e0d08eeb1baa69fcbb7758cd455b7b1c0ceab1e2a136ccb1713c530984
+
+RUN set -eu; \
+    case "${TARGETARCH}" in \
+        amd64) arch=x64; sha256="${TEMURIN_SHA256_AMD64}" ;; \
+        arm64) arch=aarch64; sha256="${TEMURIN_SHA256_ARM64}" ;; \
+        *) echo "Unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    apk add --no-cache curl; \
+    curl -fsSL --retry 8 -o /jdk.tar.gz \
+        "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-${TEMURIN_VERSION}%2B${TEMURIN_BUILD}/OpenJDK25U-jdk_${arch}_linux_hotspot_${TEMURIN_VERSION}_${TEMURIN_BUILD}.tar.gz"; \
+    echo "${sha256}  /jdk.tar.gz" | sha256sum -c -; \
+    mkdir /jdk; \
+    tar -xzf /jdk.tar.gz --strip-components=1 -C /jdk
+
 FROM trinodb/trino:484
 
 USER root
+
+# Replace the bundled JDK in place, so JAVA_HOME and the launcher keep working unchanged.
+# The directory name in JAVA_HOME still shows the old version; check `java -version` for the real one.
+# Remove this stage on the next trino update.
+RUN --mount=type=bind,from=jdk-download,source=/jdk,target=/mnt/jdk \
+    rm -rf "${JAVA_HOME}" && \
+    cp -a /mnt/jdk "${JAVA_HOME}" && \
+    "${JAVA_HOME}/bin/java" -version
 
 COPY --from=nss-wrapper /rootfs/ /
 
