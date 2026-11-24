@@ -14,6 +14,7 @@ Trino platform image is based on community image https://hub.docker.com/r/trinod
 
 * Custom entrypoint that add logic for importing certificates to java truststore
 * Dockerfile add this entrypoint and adds necessary permissions.
+* The bundled Temurin JDK is replaced with a pinned newer build to fix CVE-2026-114938 (Java4Shell). See the `jdk-download` stage in the [Dockerfile](/docker/Dockerfile).
 
 ### Deploy to k8s
 
@@ -31,6 +32,7 @@ Trino authentication is different from most other services, so it's best to be f
 4) If there are some problems with connections, trino connector documentation https://trino.io/docs/current/connector.html .
 5) Update documentation if needed.
 6) Update the pinned versions in the QA skill [qa-trino SKILL.md](/agent-packages/qa-trino/.apm/skills/qa-trino/SKILL.md): the "The component" paragraph repeats the upstream chart `appVersion` and chart version, and the template-guard table names a minimum Trino version (`438`). Grep the skill for the old version to be sure nothing else drifted.
+7) Check the JDK in the new base image with `java -version`. If it is Temurin 25.0.5.1 or later, remove the `jdk-download` stage and the JDK replacement step from the [Dockerfile](/docker/Dockerfile). Otherwise, keep them and update `TEMURIN_VERSION`, `TEMURIN_BUILD`, and both checksums if a newer Temurin build exists.
 
 ## Useful links:
 
